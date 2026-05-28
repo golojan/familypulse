@@ -16,7 +16,7 @@ export default async function SignInPage({
   }
 
   return (
-    <main className="min-h-screen bg-background px-4 py-10 font-sans text-fp-ink sm:px-6">
+    <main className="min-h-screen bg-background px-4 py-10 font-sans text-fp-ink sm:px-6 justify-center items-center flex">
       <div className="mx-auto grid max-w-5xl overflow-hidden rounded-lg border border-fp-line bg-white shadow-card lg:grid-cols-[0.95fr_1.05fr]">
         <section className="bg-fp-green p-8 text-white sm:p-10">
           <div className="grid h-14 w-14 place-items-center rounded-full bg-white/15">
