@@ -15,7 +15,10 @@ import {
 export type Article = {
   tag: string;
   title: string;
+  type?: "ARTICLE" | "VIDEO" | "PODCAST";
   image: string;
+  videoUrl?: string | null;
+  audioUrl?: string | null;
   meta: string;
   read: string;
   slug?: string;

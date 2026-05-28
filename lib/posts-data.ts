@@ -7,6 +7,7 @@ export type PostListItem = {
   slug: string;
   excerpt: string | null;
   topicTitle: string | null;
+  type: "ARTICLE" | "VIDEO" | "PODCAST";
   status: "DRAFT" | "PUBLISHED";
   publishedAt: Date | null;
   updatedAt: Date;
@@ -16,8 +17,11 @@ export type PostEditorData = {
   id: string;
   title: string;
   slug: string;
+  type: "ARTICLE" | "VIDEO" | "PODCAST";
   status: "DRAFT" | "PUBLISHED";
   coverImage: string | null;
+  videoUrl: string | null;
+  audioUrl: string | null;
   topicId: string | null;
   blocks: Block[];
 };
@@ -32,6 +36,7 @@ export async function listPostsByAuthor(authorId: string): Promise<PostListItem[
       title: true,
       slug: true,
       excerpt: true,
+      type: true,
       topic: { select: { title: true } },
       status: true,
       publishedAt: true,
@@ -52,8 +57,11 @@ export async function getPostForEditor(id: string, authorId: string): Promise<Po
       id: true,
       title: true,
       slug: true,
+      type: true,
       status: true,
       coverImage: true,
+      videoUrl: true,
+      audioUrl: true,
       topicId: true,
       blocks: true,
     },
@@ -64,8 +72,11 @@ export async function getPostForEditor(id: string, authorId: string): Promise<Po
     id: post.id,
     title: post.title,
     slug: post.slug,
+    type: post.type,
     status: post.status,
     coverImage: post.coverImage,
+    videoUrl: post.videoUrl,
+    audioUrl: post.audioUrl,
     topicId: post.topicId,
     blocks: parseBlocks(post.blocks),
   };

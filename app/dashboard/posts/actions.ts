@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { PostType } from "@/lib/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import {
   cleanBlocks,
@@ -16,7 +17,7 @@ import {
 export type ActionState = {
   ok: boolean;
   error?: string;
-  fieldErrors?: { title?: string; topic?: string };
+  fieldErrors?: { title?: string; topic?: string; type?: string };
 };
 
 const CAN_PUBLISH_ROLES = ["EDITOR", "SUPERADMIN"];
@@ -87,11 +88,17 @@ export async function savePost(
 
   const coverInput = String(formData.get("coverImage") ?? "").trim();
   const topicIdInput = String(formData.get("topicId") ?? "").trim();
+  const typeInput = String(formData.get("type") ?? "ARTICLE");
+  const videoUrl = String(formData.get("videoUrl") ?? "").trim() || null;
+  const audioUrl = String(formData.get("audioUrl") ?? "").trim() || null;
   const blocks = readBlocks(formData);
   const cover = coverInput || deriveCover(blocks);
   const excerpt = deriveExcerpt(blocks);
   const blocksJson = JSON.parse(JSON.stringify(blocks)) as object;
   const topicId = topicIdInput || null;
+  const type = Object.values(PostType).includes(typeInput as PostType)
+    ? (typeInput as PostType)
+    : PostType.ARTICLE;
 
   if (topicId) {
     const topic = await prisma.topic.findUnique({
@@ -114,6 +121,9 @@ export async function savePost(
     if (!owned) {
       return { ok: false, error: "Post not found." };
     }
+    if (owned.status === "PUBLISHED") {
+      return { ok: false, error: "Unpublish this post before editing or saving drafts." };
+    }
 
     const slug = await uniqueSlug(title, postId);
     await prisma.post.update({
@@ -121,8 +131,11 @@ export async function savePost(
       data: {
         title,
         slug,
+        type,
         excerpt,
         coverImage: cover,
+        videoUrl,
+        audioUrl,
         blocks: blocksJson,
         topicId,
         status: mode === "publish" ? "PUBLISHED" : "DRAFT",
@@ -137,8 +150,11 @@ export async function savePost(
       data: {
         title,
         slug,
+        type,
         excerpt,
         coverImage: cover,
+        videoUrl,
+        audioUrl,
         blocks: blocksJson,
         topicId,
         status: mode === "publish" ? "PUBLISHED" : "DRAFT",

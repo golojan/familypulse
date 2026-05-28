@@ -47,7 +47,10 @@ export default async function EditPostPage({
         <PostEditor
           postId={post.id}
           initialTitle={post.title}
+          initialType={post.type}
           initialCover={post.coverImage ?? ""}
+          initialVideoUrl={post.videoUrl ?? ""}
+          initialAudioUrl={post.audioUrl ?? ""}
           initialTopicId={post.topicId}
           initialBlocks={post.blocks}
           status={post.status}

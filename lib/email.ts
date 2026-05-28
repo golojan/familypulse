@@ -1,26 +1,31 @@
+import "server-only";
 import { Resend } from "resend";
+import { getSettings } from "@/lib/settings";
 
 /**
  * Transactional email via Resend.
  *
- * Set `RESEND_API_KEY` and `EMAIL_FROM` in the environment. The client is
- * created lazily so importing this module never throws when the key is absent
- * (e.g. during builds); `sendEmail` will reject at call time instead.
+ * The API key and default From address are resolved from site settings
+ * (database value, falling back to `RESEND_API_KEY` / `EMAIL_FROM` in the
+ * environment). The client is created per-call so importing this module never
+ * throws when the key is absent; `sendEmail` rejects at call time instead.
  */
 
-let client: Resend | null = null;
+export const FALLBACK_FROM = "FamilyPulse <no-reply@familypulse.com>";
 
-function getResend(): Resend {
-  if (!process.env.RESEND_API_KEY) {
-    throw new Error("RESEND_API_KEY is not set");
+async function getResend(): Promise<Resend> {
+  const { RESEND_API_KEY } = await getSettings();
+  if (!RESEND_API_KEY) {
+    throw new Error("Resend API key is not configured (set it in Site Settings or RESEND_API_KEY).");
   }
-  client ??= new Resend(process.env.RESEND_API_KEY);
-  return client;
+  return new Resend(RESEND_API_KEY);
 }
 
-/** Default From address: `EMAIL_FROM`, falling back to a placeholder. */
-export const EMAIL_FROM =
-  process.env.EMAIL_FROM ?? "FamilyPulse <no-reply@familypulse.com>";
+/** Resolve the default From address from settings, falling back to a placeholder. */
+export async function getEmailFrom(): Promise<string> {
+  const { EMAIL_FROM } = await getSettings();
+  return EMAIL_FROM ?? FALLBACK_FROM;
+}
 
 export interface SendEmailOptions {
   to: string | string[];
@@ -40,15 +45,18 @@ export async function sendEmail({
   subject,
   html,
   text,
-  from = EMAIL_FROM,
+  from,
   replyTo,
 }: SendEmailOptions): Promise<string> {
   if (!html && !text) {
     throw new Error("sendEmail requires `html` or `text`");
   }
 
-  const { data, error } = await getResend().emails.send({
-    from,
+  const resend = await getResend();
+  const fromAddress = from ?? (await getEmailFrom());
+
+  const { data, error } = await resend.emails.send({
+    from: fromAddress,
     to,
     subject,
     // Resend's types want at least one of html/text/react.

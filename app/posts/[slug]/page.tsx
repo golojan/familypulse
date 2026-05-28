@@ -47,6 +47,28 @@ export default async function PostPage({
           <Image src={post.image} alt={post.title} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 980px" priority />
         </div>
 
+        {post.type === "VIDEO" && post.videoUrl ? (
+          <div className="mt-6 overflow-hidden rounded-lg border border-fp-line bg-white p-3 shadow-card">
+            {isYouTubeUrl(post.videoUrl) ? (
+              <iframe
+                className="aspect-video w-full rounded-md"
+                src={toYouTubeEmbed(post.videoUrl)}
+                title={post.title}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
+            ) : (
+              <video className="w-full rounded-md" src={post.videoUrl} controls />
+            )}
+          </div>
+        ) : null}
+
+        {post.type === "PODCAST" && post.audioUrl ? (
+          <div className="mt-6 rounded-lg border border-fp-line bg-white p-5 shadow-card">
+            <audio className="w-full" src={post.audioUrl} controls />
+          </div>
+        ) : null}
+
         <PostBody blocks={post.blocks} excerpt={post.excerpt} topicName={post.topicTitle ?? post.tag} />
       </article>
 
@@ -66,6 +88,22 @@ export default async function PostPage({
       ) : null}
     </main>
   );
+}
+
+function isYouTubeUrl(url: string) {
+  return /(?:youtube\.com|youtu\.be)/i.test(url);
+}
+
+function toYouTubeEmbed(url: string) {
+  try {
+    const parsed = new URL(url);
+    const videoId = parsed.hostname.includes("youtu.be")
+      ? parsed.pathname.replace("/", "")
+      : parsed.searchParams.get("v");
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+  } catch {
+    return url;
+  }
 }
 
 function PostBody({

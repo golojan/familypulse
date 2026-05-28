@@ -1,6 +1,9 @@
 import Link from "next/link";
-import { LogIn, LogOut, UserRound } from "lucide-react";
-import { auth, signOut } from "@/auth";
+import { LogIn } from "lucide-react";
+import { auth } from "@/auth";
+import { UserAccountMenu } from "./user-account-menu";
+
+const CAN_MANAGE_POSTS = ["EDITOR", "SUPERADMIN"];
 
 export async function AuthButton() {
   const session = await auth();
@@ -14,19 +17,7 @@ export async function AuthButton() {
     );
   }
 
-  return (
-    <form
-      className="hidden sm:block"
-      action={async () => {
-        "use server";
-        await signOut({ redirectTo: "/" });
-      }}
-    >
-      <button className="inline-flex items-center gap-2 rounded-md bg-fp-green px-5 py-3 text-sm font-extrabold !text-white shadow-green">
-        <UserRound className="h-4 w-4" />
-        <span className="max-w-28 truncate">{session.user.name ?? "Account"}</span>
-        <LogOut className="h-4 w-4" />
-      </button>
-    </form>
-  );
+  const canManagePosts = session.user.roles?.some((role) => CAN_MANAGE_POSTS.includes(role)) ?? false;
+
+  return <UserAccountMenu canManagePosts={canManagePosts} email={session.user.email} image={session.user.image} name={session.user.name} />;
 }

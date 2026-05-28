@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { FileText, PenLine, Plus } from "lucide-react";
+import { FileText, Images, PenLine, Plus, Settings } from "lucide-react";
 import { auth } from "@/auth";
 import { listPostsByAuthor, type PostListItem } from "@/lib/posts-data";
 import { PostRowActions } from "@/components/post-row-actions";
@@ -39,6 +39,7 @@ export default async function DashboardPage() {
     );
   }
 
+  const isSuperadmin = session.user.roles?.includes("SUPERADMIN");
   const posts = await listPostsByAuthor(session.user.id);
   const drafts = posts.filter((p) => p.status === "DRAFT");
   const published = posts.filter((p) => p.status === "PUBLISHED");
@@ -63,6 +64,20 @@ export default async function DashboardPage() {
           >
             <Plus className="h-4 w-4" /> New post
           </Link>
+          <Link
+            href="/dashboard/media"
+            className="inline-flex items-center gap-2 rounded-md border border-fp-line bg-white px-5 py-3 text-sm font-extrabold text-fp-ink shadow-soft"
+          >
+            <Images className="h-4 w-4" /> Media
+          </Link>
+          {isSuperadmin ? (
+            <Link
+              href="/admin/settings"
+              className="inline-flex items-center gap-2 rounded-md border border-fp-line bg-white px-5 py-3 text-sm font-extrabold text-fp-ink shadow-soft"
+            >
+              <Settings className="h-4 w-4" /> Settings
+            </Link>
+          ) : null}
         </header>
 
         {posts.length === 0 ? (

@@ -58,8 +58,11 @@ type DbPost = {
   id: string;
   title: string;
   slug: string;
+  type: "ARTICLE" | "VIDEO" | "PODCAST";
   excerpt: string | null;
   coverImage: string | null;
+  videoUrl: string | null;
+  audioUrl: string | null;
   blocks: unknown;
   publishedAt: Date | null;
   updatedAt: Date;
@@ -70,6 +73,7 @@ export type TopicOption = {
   id: string;
   title: string;
   slug: string;
+  parentTitle?: string;
 };
 
 export type PostPageData = Article & {
@@ -129,9 +133,12 @@ function dbPostToArticle(post: DbPost): PostPageData {
     id: post.id,
     tag: topicTitle,
     title: post.title,
+    type: post.type,
     slug: post.slug,
     href: `/posts/${post.slug}`,
     image: cover,
+    videoUrl: post.videoUrl,
+    audioUrl: post.audioUrl,
     meta: formatDate(post.publishedAt ?? post.updatedAt),
     read: estimateReadTime(blocks, post.excerpt),
     topicTitle,
@@ -176,10 +183,24 @@ export async function listTopicsForEditor(): Promise<TopicOption[]> {
   try {
     await ensureDefaultTopics();
     const topics = await prisma.topic.findMany({
-      orderBy: { title: "asc" },
-      select: { id: true, title: true, slug: true },
+      orderBy: [{ parentId: "asc" }, { title: "asc" }],
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        parent: {
+          select: { title: true },
+        },
+      },
     });
-    return topics.sort((a, b) => topicOrder(a.slug) - topicOrder(b.slug));
+    return topics
+      .sort((a, b) => topicOrder(a.slug) - topicOrder(b.slug))
+      .map((topic) => ({
+        id: topic.id,
+        title: topic.parent ? `${topic.parent.title} / ${topic.title}` : topic.title,
+        slug: topic.slug,
+        parentTitle: topic.parent?.title,
+      }));
   } catch (error) {
     warnTopicStoreFallback(error);
     return [];

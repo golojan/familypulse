@@ -18,6 +18,24 @@ enum PostStatus {
   PUBLISHED
 }
 
+enum PostType {
+  ARTICLE
+  VIDEO
+  PODCAST
+}
+
+enum MediaKind {
+  IMAGE
+  VIDEO
+  AUDIO
+  DOCUMENT
+}
+
+enum MediaStatus {
+  PENDING
+  READY
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -28,29 +46,39 @@ model User {
   accounts      Account[]
   sessions      Session[]
   posts         Post[]
+  mediaAssets   MediaAsset[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Topic {
-  id          String @id @default(cuid())
-  title       String
-  slug        String @unique
-  description String?
-  icon        String @default("MessageCircle")
-  posts       Post[]
+  id           String  @id @default(cuid())
+  title        String
+  slug         String  @unique
+  description  String?
+  icon         String  @default("MessageCircle")
+  writerPrompt String?
+  parentId     String?
+  parent       Topic?  @relation("TopicTree", fields: [parentId], references: [id], onDelete: SetNull)
+  subtopics    Topic[] @relation("TopicTree")
+  posts        Post[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([parentId])
 }
 
 model Post {
   id          String     @id @default(cuid())
   title       String
   slug        String     @unique
+  type        PostType   @default(ARTICLE)
   excerpt     String?
   coverImage  String?
+  videoUrl    String?
+  audioUrl    String?
   blocks      Json       @default("[]")
   status      PostStatus @default(DRAFT)
   publishedAt DateTime?
@@ -67,6 +95,28 @@ model Post {
   @@index([authorId])
   @@index([topicId])
   @@index([status, publishedAt])
+}
+
+model MediaAsset {
+  id          String      @id @default(cuid())
+  key         String      @unique
+  url         String
+  filename    String
+  alt         String?
+  kind        MediaKind
+  status      MediaStatus @default(PENDING)
+  contentType String
+  size        Int
+
+  uploadedById String
+  uploadedBy   User   @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([uploadedById, createdAt])
+  @@index([kind])
+  @@index([status])
 }
 
 model Account {
@@ -108,4 +158,13 @@ model VerificationToken {
   expires    DateTime
 
   @@id([identifier, token])
+}
+
+/// Persisted site configuration, keyed by a stable setting key (e.g. "AUTH_GOOGLE_ID").
+/// Secret values are stored encrypted (see lib/crypto.ts); `encrypted` marks which.
+model SiteSetting {
+  key       String   @id
+  value     String?
+  encrypted Boolean  @default(false)
+  updatedAt DateTime @updatedAt
 }

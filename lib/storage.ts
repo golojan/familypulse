@@ -1,54 +1,74 @@
 import "server-only";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { randomBytes } from "node:crypto";
+import { getSettings } from "@/lib/settings";
 
 /**
  * DigitalOcean Spaces (S3-compatible) client + presigned PUT URL helper.
  *
  * Browser uploads directly to Spaces using the signed URL — the server only
- * signs, never streams the bytes. Set:
+ * signs, never streams the bytes. Configuration is resolved from site settings
+ * (database values, falling back to the matching DO_SPACES_* env vars):
  *   DO_SPACES_REGION         (e.g. fra1)
- *   DO_SPACES_ENDPOINT       (https://<region>.digitaloceanspaces.com)
+ *   DO_SPACES_ENDPOINT       (origin URL)
  *   DO_SPACES_BUCKET
  *   DO_SPACES_KEY / DO_SPACES_SECRET
  *   DO_SPACES_CDN_ENDPOINT   (optional CDN URL; falls back to origin)
  */
 
-const REGION = process.env.DO_SPACES_REGION ?? "fra1";
-const ENDPOINT =
-  process.env.DO_SPACES_ENDPOINT ?? `https://${REGION}.digitaloceanspaces.com`;
+type SpacesConfig = {
+  client: S3Client;
+  bucket: string;
+  endpoint: string;
+  cdnEndpoint: string | null;
+};
 
-let _client: S3Client | null = null;
-function client(): S3Client {
-  if (_client) return _client;
-  if (!process.env.DO_SPACES_KEY || !process.env.DO_SPACES_SECRET) {
-    throw new Error("DO_SPACES_KEY / DO_SPACES_SECRET are not set");
+/**
+ * Build a Spaces client + config from current settings. Resolved per call so
+ * credentials changed in Site Settings take effect without a restart. Throws if
+ * the required values are missing.
+ */
+async function getSpaces(): Promise<SpacesConfig> {
+  const s = await getSettings();
+  const region = s.DO_SPACES_REGION ?? "fra1";
+  const endpoint = s.DO_SPACES_ENDPOINT ?? `https://${region}.digitaloceanspaces.com`;
+
+  if (!s.DO_SPACES_KEY || !s.DO_SPACES_SECRET) {
+    throw new Error("DigitalOcean Spaces credentials are not configured (Site Settings or DO_SPACES_*).");
   }
-  _client = new S3Client({
-    region: REGION,
-    endpoint: ENDPOINT,
-    forcePathStyle: false,
-    credentials: {
-      accessKeyId: process.env.DO_SPACES_KEY,
-      secretAccessKey: process.env.DO_SPACES_SECRET,
-    },
-  });
-  return _client;
-}
+  if (!s.DO_SPACES_BUCKET) {
+    throw new Error("DigitalOcean Spaces bucket is not configured (Site Settings or DO_SPACES_BUCKET).");
+  }
 
-function bucket(): string {
-  const b = process.env.DO_SPACES_BUCKET;
-  if (!b) throw new Error("DO_SPACES_BUCKET is not set");
-  return b;
+  return {
+    client: new S3Client({
+      region,
+      endpoint,
+      forcePathStyle: false,
+      credentials: {
+        accessKeyId: s.DO_SPACES_KEY,
+        secretAccessKey: s.DO_SPACES_SECRET,
+      },
+    }),
+    bucket: s.DO_SPACES_BUCKET,
+    endpoint,
+    cdnEndpoint: s.DO_SPACES_CDN_ENDPOINT ?? null,
+  };
 }
 
 /** Public URL for a stored object — CDN if configured, else the Spaces origin. */
-export function publicUrl(key: string): string {
+function buildPublicUrl(cfg: SpacesConfig, key: string): string {
   const base =
-    process.env.DO_SPACES_CDN_ENDPOINT?.replace(/\/+$/, "") ||
-    `${ENDPOINT.replace(/\/+$/, "")}/${bucket()}`;
+    cfg.cdnEndpoint?.replace(/\/+$/, "") ||
+    `${cfg.endpoint.replace(/\/+$/, "")}/${cfg.bucket}`;
   return `${base}/${key.replace(/^\/+/, "")}`;
+}
+
+/** Public URL for a stored object, resolved from current settings. */
+export async function publicUrl(key: string): Promise<string> {
+  const cfg = await getSpaces();
+  return buildPublicUrl(cfg, key);
 }
 
 const ALLOWED_IMAGE_TYPES = new Set([
@@ -67,6 +87,18 @@ const ALLOWED_MESSAGE_MEDIA_TYPES = new Set([
   "audio/webm",
   "video/mp4",
   "video/webm",
+]);
+const ALLOWED_LIBRARY_MEDIA_TYPES = new Set([
+  ...ALLOWED_IMAGE_TYPES,
+  "audio/mp3",
+  "audio/mpeg",
+  "audio/mp4",
+  "audio/wav",
+  "audio/webm",
+  "audio/x-mpeg",
+  "video/mp4",
+  "video/webm",
+  "application/pdf",
 ]);
 const ALLOWED_CAMPAIGN_MEDIA_TYPES = new Set([
   "image/jpeg",
@@ -93,6 +125,7 @@ const CAMPAIGN_MEDIA_TYPES_BY_CATEGORY: Record<string, Set<string>> = {
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024; // 5 MB
 const MAX_GROUP_LOGO_BYTES = 5 * 1024 * 1024; // 5 MB
 const MAX_MESSAGE_MEDIA_BYTES = 50 * 1024 * 1024; // 50 MB
+const MAX_LIBRARY_MEDIA_BYTES = 250 * 1024 * 1024; // 250 MB
 
 const EXT_BY_TYPE: Record<string, string> = {
   "image/jpeg": "jpg",
@@ -145,8 +178,9 @@ export async function presignAvatarUpload(opts: {
   const id = randomBytes(12).toString("hex");
   const key = `avatars/${opts.userId}/${id}.${ext}`;
 
+  const cfg = await getSpaces();
   const command = new PutObjectCommand({
-    Bucket: bucket(),
+    Bucket: cfg.bucket,
     Key: key,
     ContentType: opts.contentType,
     ContentLength: opts.size,
@@ -155,12 +189,12 @@ export async function presignAvatarUpload(opts: {
   });
 
   const expiresIn = 60; // 1 minute is plenty for an avatar upload
-  const uploadUrl = await getSignedUrl(client(), command, { expiresIn });
+  const uploadUrl = await getSignedUrl(cfg.client, command, { expiresIn });
 
   return {
     uploadUrl,
     key,
-    publicUrl: publicUrl(key),
+    publicUrl: buildPublicUrl(cfg, key),
     contentType: opts.contentType,
     maxBytes: MAX_AVATAR_BYTES,
     expiresIn,
@@ -189,8 +223,9 @@ export async function presignGroupLogoUpload(opts: {
   const ownerPath = opts.groupId ? `group-${opts.groupId}` : `draft-${opts.userId}`;
   const key = `group-logos/${ownerPath}/${id}.${ext}`;
 
+  const cfg = await getSpaces();
   const command = new PutObjectCommand({
-    Bucket: bucket(),
+    Bucket: cfg.bucket,
     Key: key,
     ContentType: opts.contentType,
     ContentLength: opts.size,
@@ -199,12 +234,12 @@ export async function presignGroupLogoUpload(opts: {
   });
 
   const expiresIn = 60;
-  const uploadUrl = await getSignedUrl(client(), command, { expiresIn });
+  const uploadUrl = await getSignedUrl(cfg.client, command, { expiresIn });
 
   return {
     uploadUrl,
     key,
-    publicUrl: publicUrl(key),
+    publicUrl: buildPublicUrl(cfg, key),
     contentType: opts.contentType,
     maxBytes: MAX_GROUP_LOGO_BYTES,
     expiresIn,
@@ -229,8 +264,9 @@ export async function presignArticleMediaUpload(opts: {
   const articleSeg = opts.articleId ?? "drafts";
   const key = `articles/${articleSeg}/${opts.userId}/${id}.${ext}`;
 
+  const cfg = await getSpaces();
   const command = new PutObjectCommand({
-    Bucket: bucket(),
+    Bucket: cfg.bucket,
     Key: key,
     ContentType: opts.contentType,
     ContentLength: opts.size,
@@ -239,16 +275,66 @@ export async function presignArticleMediaUpload(opts: {
   });
 
   const expiresIn = 60;
-  const uploadUrl = await getSignedUrl(client(), command, { expiresIn });
+  const uploadUrl = await getSignedUrl(cfg.client, command, { expiresIn });
 
   return {
     uploadUrl,
     key,
-    publicUrl: publicUrl(key),
+    publicUrl: buildPublicUrl(cfg, key),
     contentType: opts.contentType,
     maxBytes: MAX_MESSAGE_MEDIA_BYTES,
     expiresIn,
   };
+}
+
+export async function presignMediaLibraryUpload(opts: {
+  userId: string;
+  contentType: string;
+  size: number;
+  kind: "IMAGE" | "VIDEO" | "AUDIO" | "DOCUMENT";
+}): Promise<PresignedUpload> {
+  if (!ALLOWED_LIBRARY_MEDIA_TYPES.has(opts.contentType)) {
+    throw new Error(`Unsupported media type: ${opts.contentType}`);
+  }
+  if (opts.size <= 0 || opts.size > MAX_LIBRARY_MEDIA_BYTES) {
+    throw new Error(`File too large (max ${MAX_LIBRARY_MEDIA_BYTES / 1024 / 1024}MB)`);
+  }
+
+  const ext = EXT_BY_TYPE[opts.contentType];
+  const id = randomBytes(12).toString("hex");
+  const key = `media/${opts.userId}/${opts.kind.toLowerCase()}/${id}.${ext}`;
+
+  const cfg = await getSpaces();
+  const command = new PutObjectCommand({
+    Bucket: cfg.bucket,
+    Key: key,
+    ContentType: opts.contentType,
+    ContentLength: opts.size,
+    ACL: "public-read",
+    CacheControl: "public, max-age=31536000, immutable",
+  });
+
+  const expiresIn = 60;
+  const uploadUrl = await getSignedUrl(cfg.client, command, { expiresIn });
+
+  return {
+    uploadUrl,
+    key,
+    publicUrl: buildPublicUrl(cfg, key),
+    contentType: opts.contentType,
+    maxBytes: MAX_LIBRARY_MEDIA_BYTES,
+    expiresIn,
+  };
+}
+
+export async function deleteStoredObject(key: string) {
+  const cfg = await getSpaces();
+  await cfg.client.send(
+    new DeleteObjectCommand({
+      Bucket: cfg.bucket,
+      Key: key,
+    }),
+  );
 }
 
 export async function presignCampaignMediaUpload(opts: {
@@ -276,8 +362,9 @@ export async function presignCampaignMediaUpload(opts: {
   const id = randomBytes(12).toString("hex");
   const key = `campaign-media/${opts.userId}/${id}.${ext}`;
 
+  const cfg = await getSpaces();
   const command = new PutObjectCommand({
-    Bucket: bucket(),
+    Bucket: cfg.bucket,
     Key: key,
     ContentType: opts.contentType,
     ContentLength: opts.size,
@@ -286,12 +373,12 @@ export async function presignCampaignMediaUpload(opts: {
   });
 
   const expiresIn = 60;
-  const uploadUrl = await getSignedUrl(client(), command, { expiresIn });
+  const uploadUrl = await getSignedUrl(cfg.client, command, { expiresIn });
 
   return {
     uploadUrl,
     key,
-    publicUrl: publicUrl(key),
+    publicUrl: buildPublicUrl(cfg, key),
     contentType: opts.contentType,
     maxBytes: MAX_MESSAGE_MEDIA_BYTES,
     expiresIn,
@@ -321,8 +408,9 @@ export async function presignGroupMessageMediaUpload(opts: {
   const id = randomBytes(12).toString("hex");
   const key = `group-media/${opts.groupId}/${opts.userId}/${id}.${ext}`;
 
+  const cfg = await getSpaces();
   const command = new PutObjectCommand({
-    Bucket: bucket(),
+    Bucket: cfg.bucket,
     Key: key,
     ContentType: opts.contentType,
     ContentLength: opts.size,
@@ -331,12 +419,12 @@ export async function presignGroupMessageMediaUpload(opts: {
   });
 
   const expiresIn = 60;
-  const uploadUrl = await getSignedUrl(client(), command, { expiresIn });
+  const uploadUrl = await getSignedUrl(cfg.client, command, { expiresIn });
 
   return {
     uploadUrl,
     key,
-    publicUrl: publicUrl(key),
+    publicUrl: buildPublicUrl(cfg, key),
     contentType: opts.contentType,
     maxBytes: MAX_MESSAGE_MEDIA_BYTES,
     expiresIn,
