@@ -1,5 +1,5 @@
 import Image from "next/image";
-import type { PopularPost } from "@/lib/familypulse-data";
+import { slugify, type PopularPost } from "@/lib/familypulse-data";
 import { SectionHeader } from "./section-header";
 
 export function PopularPosts({ posts }: { posts: PopularPost[] }) {
@@ -8,7 +8,7 @@ export function PopularPosts({ posts }: { posts: PopularPost[] }) {
       <SectionHeader title="Popular Posts" compact />
       <div className="space-y-3">
         {posts.map((post, index) => (
-          <a key={post.title} href="#" className="grid grid-cols-[1.55rem_4.3rem_1fr] items-center gap-3 border-b border-fp-line pb-3 last:border-0 last:pb-0">
+          <a key={post.title} href={post.href ?? `/posts/${slugify(post.title)}`} className="grid grid-cols-[1.55rem_4.3rem_1fr] items-center gap-3 border-b border-fp-line pb-3 last:border-0 last:pb-0">
             <span className="grid h-6 w-6 place-items-center rounded-full bg-fp-green text-[11px] font-extrabold text-white">
               {index + 1}
             </span>

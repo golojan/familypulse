@@ -6,7 +6,7 @@ type SectionHeaderProps = {
   href?: string;
 };
 
-export function SectionHeader({ title, compact = false, href = "#" }: SectionHeaderProps) {
+export function SectionHeader({ title, compact = false, href = "/topics" }: SectionHeaderProps) {
   return (
     <div className={`mb-3 flex items-center justify-between ${compact ? "px-1" : ""}`}>
       <h2 className={`${compact ? "text-xl" : "text-xl sm:text-2xl"} font-bold text-fp-ink`}>{title}</h2>

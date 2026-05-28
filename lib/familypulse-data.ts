@@ -18,6 +18,11 @@ export type Article = {
   image: string;
   meta: string;
   read: string;
+  slug?: string;
+  href?: string;
+  topicTitle?: string;
+  topicSlug?: string;
+  topicHref?: string;
 };
 
 export type PodcastEpisode = {
@@ -31,12 +36,15 @@ export type MediaCard = {
   title: string;
   image: string;
   icon: LucideIcon;
+  href?: string;
 };
 
 export type QuickTopic = {
   icon: LucideIcon;
   title: string;
   desc: string;
+  slug: string;
+  href: string;
 };
 
 export type PopularPost = {
@@ -44,13 +52,65 @@ export type PopularPost = {
   image: string;
   meta: string;
   read: string;
+  href?: string;
 };
 
 export type TopicBlogSection = {
   title: string;
+  slug: string;
   href: string;
   posts: Article[];
 };
+
+export type Topic = {
+  icon: LucideIcon;
+  title: string;
+  desc: string;
+  slug: string;
+  href: string;
+};
+
+export function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+export function getTopicHref(titleOrSlug: string) {
+  const slug = titleOrSlug.includes("-") ? titleOrSlug : slugify(titleOrSlug);
+  return `/topics/${slug}`;
+}
+
+export function getArticleHref(article: Pick<Article, "title" | "slug" | "href">) {
+  return article.href ?? `/posts/${article.slug ?? slugify(article.title)}`;
+}
+
+function withArticleTopic(article: Article, topicTitle: string): Article {
+  const topicSlug = slugify(topicTitle);
+  const slug = article.slug ?? slugify(article.title);
+
+  return {
+    ...article,
+    slug,
+    href: article.href ?? `/posts/${slug}`,
+    topicTitle,
+    topicSlug,
+    topicHref: getTopicHref(topicSlug),
+  };
+}
+
+export const topics: Topic[] = [
+  { icon: MessageCircle, title: "Communication", desc: "Build stronger connections", slug: "communication", href: "/topics/communication" },
+  { icon: ShieldCheck, title: "Parenting & Discipline", desc: "Positive guidance that works", slug: "parenting-discipline", href: "/topics/parenting-discipline" },
+  { icon: Heart, title: "Marriage & Relationships", desc: "Stronger together, every day", slug: "marriage-relationships", href: "/topics/marriage-relationships" },
+  { icon: BriefcaseBusiness, title: "Work-Life Balance", desc: "Thrive at home and work", slug: "work-life-balance", href: "/topics/work-life-balance" },
+  { icon: Star, title: "Child Development", desc: "Support your child's growth", slug: "child-development", href: "/topics/child-development" },
+  { icon: Brain, title: "Mental Wellness", desc: "Calm habits for every day", slug: "mental-wellness", href: "/topics/mental-wellness" },
+  { icon: PartyPopper, title: "Family Activities", desc: "Simple ways to connect", slug: "family-activities", href: "/topics/family-activities" },
+  { icon: Home, title: "Faith & Values", desc: "Shared values at home", slug: "faith-values", href: "/topics/faith-values" },
+];
 
 export const articles: Article[] = [
   {
@@ -104,6 +164,7 @@ export const mediaCards: MediaCard[] = [
     image:
       "https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=700&q=80",
     icon: Video,
+    href: "/topics/communication",
   },
   {
     label: "Educational Reads",
@@ -111,6 +172,7 @@ export const mediaCards: MediaCard[] = [
     image:
       "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=700&q=80",
     icon: BookOpen,
+    href: "/topics/child-development",
   },
   {
     label: "Relationship Advice",
@@ -118,6 +180,7 @@ export const mediaCards: MediaCard[] = [
     image:
       "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=700&q=80",
     icon: Heart,
+    href: "/topics/marriage-relationships",
   },
   {
     label: "Parenting & Discipline",
@@ -125,6 +188,7 @@ export const mediaCards: MediaCard[] = [
     image:
       "https://images.unsplash.com/photo-1609220136736-443140cffec6?auto=format&fit=crop&w=700&q=80",
     icon: ShieldCheck,
+    href: "/topics/parenting-discipline",
   },
   {
     label: "Work-Life Balance",
@@ -132,28 +196,20 @@ export const mediaCards: MediaCard[] = [
     image:
       "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=700&q=80",
     icon: BriefcaseBusiness,
+    href: "/topics/work-life-balance",
   },
 ];
 
-export const quickTopics: QuickTopic[] = [
-  { icon: MessageCircle, title: "Communication", desc: "Build stronger connections" },
-  { icon: ShieldCheck, title: "Parenting & Discipline", desc: "Positive guidance that works" },
-  { icon: Heart, title: "Marriage & Relationships", desc: "Stronger together, every day" },
-  { icon: BriefcaseBusiness, title: "Work-Life Balance", desc: "Thrive at home and work" },
-  { icon: Star, title: "Child Development", desc: "Support your child's growth" },
-  { icon: Brain, title: "Mental Wellness", desc: "Calm habits for every day" },
-  { icon: PartyPopper, title: "Family Activities", desc: "Simple ways to connect" },
-  { icon: Home, title: "Faith & Values", desc: "Shared values at home" },
-];
+export const quickTopics: QuickTopic[] = topics;
 
 export const trendingTopics = [
-  "Gentle Parenting",
-  "Family Communication",
-  "Toddler Tantrums",
-  "Marriage Tips",
-  "Screen Time",
-  "Self Care",
-  "Morning Routine",
+  { title: "Gentle Parenting", href: "/topics/parenting-discipline" },
+  { title: "Family Communication", href: "/topics/communication" },
+  { title: "Toddler Tantrums", href: "/topics/parenting-discipline" },
+  { title: "Marriage Tips", href: "/topics/marriage-relationships" },
+  { title: "Screen Time", href: "/topics/family-activities" },
+  { title: "Self Care", href: "/topics/mental-wellness" },
+  { title: "Morning Routine", href: "/topics/work-life-balance" },
 ];
 
 export const popularPosts: PopularPost[] = [
@@ -194,7 +250,7 @@ export const popularPosts: PopularPost[] = [
   },
 ];
 
-const baseTopicBlogSections: TopicBlogSection[] = [
+const baseTopicBlogSections: Array<Omit<TopicBlogSection, "slug">> = [
   {
     title: "Communication",
     href: "#communication",
@@ -649,6 +705,36 @@ const topicBlogExtras: Record<string, Article[]> = {
 };
 
 export const topicBlogSections: TopicBlogSection[] = baseTopicBlogSections.map((section) => ({
-  ...section,
-  posts: [...section.posts, ...(topicBlogExtras[section.title] ?? [])].slice(0, 6),
+  title: section.title,
+  slug: slugify(section.title),
+  href: getTopicHref(section.title),
+  posts: [...section.posts, ...(topicBlogExtras[section.title] ?? [])]
+    .slice(0, 6)
+    .map((post) => withArticleTopic(post, section.title)),
 }));
+
+export const allPosts: Article[] = Array.from(
+  new Map(
+    topicBlogSections
+      .flatMap((section) => section.posts)
+      .map((post) => [post.slug ?? slugify(post.title), post])
+  ).values()
+);
+
+export function getTopicBySlug(slug: string) {
+  return topics.find((topic) => topic.slug === slug);
+}
+
+export function getPostsByTopicSlug(slug: string) {
+  return allPosts.filter((post) => post.topicSlug === slug);
+}
+
+export function getPostBySlug(slug: string) {
+  return allPosts.find((post) => post.slug === slug);
+}
+
+export function getRelatedPosts(post: Article, limit = 3) {
+  return allPosts
+    .filter((item) => item.topicSlug === post.topicSlug && item.slug !== post.slug)
+    .slice(0, limit);
+}

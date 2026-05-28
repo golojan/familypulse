@@ -3,13 +3,13 @@ import { AuthButton } from "./auth-button";
 import { Logo } from "./logo";
 
 const navItems = [
-  { label: "Articles", menu: true },
-  { label: "Podcast" },
-  { label: "Videos" },
-  { label: "Parenting", menu: true },
-  { label: "Couples", menu: true, wideOnly: true },
-  { label: "Family Life", menu: true, wideOnly: true },
-  { label: "About", menu: true },
+  { label: "Articles", href: "#articles", menu: true },
+  { label: "Podcast", href: "#podcast" },
+  { label: "Videos", href: "#videos" },
+  { label: "Parenting", href: "/topics/parenting-discipline", menu: true },
+  { label: "Couples", href: "/topics/marriage-relationships", menu: true, wideOnly: true },
+  { label: "Family Life", href: "/topics/family-activities", menu: true, wideOnly: true },
+  { label: "Topics", href: "/topics", menu: true },
 ];
 
 export function SiteHeader() {
@@ -26,7 +26,7 @@ export function SiteHeader() {
             Home
           </a>
           {navItems.map((item) => (
-            <a key={item.label} className={`items-center gap-1 hover:text-fp-green ${item.wideOnly ? "hidden 2xl:inline-flex" : "inline-flex"}`} href="#">
+            <a key={item.label} className={`items-center gap-1 hover:text-fp-green ${item.wideOnly ? "hidden 2xl:inline-flex" : "inline-flex"}`} href={item.href}>
               {item.label} {item.menu ? <ChevronDown className="h-4 w-4" /> : null}
             </a>
           ))}

@@ -15,7 +15,7 @@ export function NewsCard({ card }: { card: MediaCard }) {
       <div className="pt-3 sm:pt-4">
         <div className="mb-2 flex items-center justify-between gap-2">
           <p className="truncate text-sm font-extrabold text-fp-ink">{card.label}</p>
-          <a href="#" className="shrink-0 text-xs font-extrabold text-fp-green">View all</a>
+          <a href={card.href ?? "#"} className="shrink-0 text-xs font-extrabold text-fp-green">View all</a>
         </div>
         <h3 className="line-clamp-2 text-sm font-extrabold leading-tight text-fp-ink sm:text-base">{card.title}</h3>
         <p className="mt-3 text-xs font-semibold text-fp-muted">Apr 28, 2024 &middot; 6 min read</p>

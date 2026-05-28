@@ -1,4 +1,5 @@
-import { articles, mediaCards, podcasts, popularPosts, quickTopics, topicBlogSections, trendingTopics } from "@/lib/familypulse-data";
+import { articles, mediaCards, podcasts, popularPosts, quickTopics, trendingTopics } from "@/lib/familypulse-data";
+import { listTopicSectionsForLanding } from "@/lib/topics-data";
 import { CategoryBlogSections } from "@/components/category-blog-sections";
 import { FeaturedArticles } from "@/components/featured-articles";
 import { HeroSliderCard } from "@/components/hero-slider-card";
@@ -15,7 +16,11 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { TrendingTopics } from "@/components/trending-topics";
 
-export default function FamilyPulseLanding() {
+export const dynamic = "force-dynamic";
+
+export default async function FamilyPulseLanding() {
+  const topicSections = await listTopicSectionsForLanding();
+
   return (
     <main className="min-h-screen bg-background pb-24 font-sans text-fp-ink lg:pb-0">
       <SiteHeader />
@@ -40,7 +45,7 @@ export default function FamilyPulseLanding() {
 
           <TrendingTopics topics={trendingTopics} />
 
-          <CategoryBlogSections sections={topicBlogSections} />
+          <CategoryBlogSections sections={topicSections} />
 
           <section className="mt-4 grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
             <PodcastCTA />

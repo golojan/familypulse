@@ -4,19 +4,39 @@ import { Logo } from "./logo";
 const footerGroups = [
   {
     title: "Explore",
-    links: ["Articles", "Podcast", "Videos", "About Us"],
+    links: [
+      { label: "Articles", href: "/#articles" },
+      { label: "Podcast", href: "/#podcast" },
+      { label: "Videos", href: "/#videos" },
+      { label: "Topics", href: "/topics" },
+    ],
   },
   {
     title: "Categories",
-    links: ["Parenting", "Couples", "Family Life", "Work-Life Balance"],
+    links: [
+      { label: "Parenting", href: "/topics/parenting-discipline" },
+      { label: "Couples", href: "/topics/marriage-relationships" },
+      { label: "Family Life", href: "/topics/family-activities" },
+      { label: "Work-Life Balance", href: "/topics/work-life-balance" },
+    ],
   },
   {
     title: "Resources",
-    links: ["Recommended Books", "Courses & Workshops", "Printables", "Community"],
+    links: [
+      { label: "Recommended Books", href: "/topics/faith-values" },
+      { label: "Courses & Workshops", href: "/topics/child-development" },
+      { label: "Printables", href: "/topics/family-activities" },
+      { label: "Community", href: "/topics/communication" },
+    ],
   },
   {
     title: "Company",
-    links: ["About Us", "Our Mission", "Contact", "Privacy Policy"],
+    links: [
+      { label: "About Us", href: "/" },
+      { label: "Our Mission", href: "/" },
+      { label: "Contact", href: "/signin" },
+      { label: "Privacy Policy", href: "/" },
+    ],
   },
 ];
 
@@ -33,8 +53,8 @@ export function SiteFooter() {
             <h3 className="text-xs font-extrabold text-fp-ink">{group.title}</h3>
             <div className="mt-2 space-y-1">
               {group.links.map((link) => (
-                <a key={link} className="block text-xs font-semibold text-fp-muted hover:text-fp-green" href="#">
-                  {link}
+                <a key={link.label} className="block text-xs font-semibold text-fp-muted hover:text-fp-green" href={link.href}>
+                  {link.label}
                 </a>
               ))}
             </div>

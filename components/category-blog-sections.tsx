@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { ArrowRight, Clock3 } from "lucide-react";
-import type { Article, TopicBlogSection } from "@/lib/familypulse-data";
+import { getArticleHref, type Article, type TopicBlogSection } from "@/lib/familypulse-data";
 import { SectionHeader } from "./section-header";
 
 type CategoryBlogSectionsProps = {
@@ -19,7 +19,7 @@ export function CategoryBlogSections({ sections }: CategoryBlogSectionsProps) {
 
 function TopicModule({ section, variant }: { section: TopicBlogSection; variant: number }) {
   return (
-    <section id={section.href.replace("#", "")} className="rounded-lg border border-fp-line bg-white p-4 shadow-card sm:p-5">
+    <section id={section.slug} className="rounded-lg border border-fp-line bg-white p-4 shadow-card sm:p-5">
       <SectionHeader title={section.title} href={section.href} />
       {variant === 0 ? <HeroAndList posts={section.posts} /> : null}
       {variant === 1 ? <MosaicGrid posts={section.posts} /> : null}
@@ -60,7 +60,7 @@ function MosaicGrid({ posts }: { posts: Article[] }) {
           <p className="text-xs font-extrabold uppercase text-fp-green">Editor pick</p>
           <h3 className="mt-3 text-2xl font-bold leading-tight text-fp-ink">{lead.title}</h3>
           <PostMeta post={lead} className="mt-5" />
-          <a className="mt-8 inline-flex items-center gap-2 text-sm font-extrabold text-fp-green" href="#">
+          <a className="mt-8 inline-flex items-center gap-2 text-sm font-extrabold text-fp-green" href={getArticleHref(lead)}>
             Read the story <ArrowRight className="h-4 w-4" />
           </a>
         </div>
@@ -83,7 +83,7 @@ function ListLedLayout({ posts }: { posts: Article[] }) {
     <div className="grid gap-4 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
       <div className="divide-y divide-fp-line rounded-md border border-fp-line bg-white">
         {listPosts.map((post, index) => (
-          <a key={post.title} href="#" className="grid gap-3 p-4 sm:grid-cols-[5.5rem_1fr]">
+          <a key={post.title} href={getArticleHref(post)} className="grid gap-3 p-4 sm:grid-cols-[5.5rem_1fr]">
             <span className="relative hidden h-20 overflow-hidden rounded-sm sm:block">
               <Image src={post.image} alt={post.title} fill className="object-cover" sizes="88px" />
             </span>
@@ -111,7 +111,7 @@ function WideRowLayout({ posts }: { posts: Article[] }) {
 
   return (
     <div className="grid gap-4">
-      <a href="#" className="grid overflow-hidden rounded-md border border-fp-line bg-fp-soft lg:grid-cols-[18rem_1fr_auto]">
+      <a href={getArticleHref(lead)} className="grid overflow-hidden rounded-md border border-fp-line bg-fp-soft lg:grid-cols-[18rem_1fr_auto]">
         <span className="relative min-h-[13rem] lg:min-h-full">
           <Image src={lead.image} alt={lead.title} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 288px" />
         </span>
@@ -135,7 +135,7 @@ function WideRowLayout({ posts }: { posts: Article[] }) {
 
 function OverlayPost({ post, className = "" }: { post: Article; className?: string }) {
   return (
-    <a href="#" className={`group relative block overflow-hidden rounded-md bg-fp-ink ${className}`}>
+    <a href={getArticleHref(post)} className={`group relative block overflow-hidden rounded-md bg-fp-ink ${className}`}>
       <Image
         src={post.image}
         alt={post.title}
@@ -159,7 +159,7 @@ function OverlayPost({ post, className = "" }: { post: Article; className?: stri
 
 function CompactRow({ post }: { post: Article }) {
   return (
-    <a href="#" className="grid min-h-[9rem] grid-cols-[7rem_1fr] overflow-hidden rounded-md border border-fp-line bg-white transition hover:shadow-soft">
+    <a href={getArticleHref(post)} className="grid min-h-[9rem] grid-cols-[7rem_1fr] overflow-hidden rounded-md border border-fp-line bg-white transition hover:shadow-soft">
       <span className="relative">
         <Image src={post.image} alt={post.title} fill className="object-cover" sizes="112px" />
       </span>
@@ -174,7 +174,7 @@ function CompactRow({ post }: { post: Article }) {
 
 function TextStrip({ post }: { post: Article }) {
   return (
-    <a href="#" className="rounded-md border border-fp-line bg-fp-soft p-4 transition hover:bg-fp-mint/60">
+    <a href={getArticleHref(post)} className="rounded-md border border-fp-line bg-fp-soft p-4 transition hover:bg-fp-mint/60">
       <span className="text-xs font-extrabold uppercase text-fp-green">{post.tag}</span>
       <span className="mt-2 block text-lg font-extrabold leading-tight text-fp-ink">{post.title}</span>
       <PostMeta post={post} className="mt-3" />
