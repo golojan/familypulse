@@ -5,7 +5,7 @@
   "crons": [
     {
       "path": "/api/cron/generate-drafts",
-      "schedule": "* * * * *"
+      "schedule": "0 * * * *"
     }
   ]
 }
