@@ -8,9 +8,13 @@ type CategoryBlogSectionsProps = {
 };
 
 export function CategoryBlogSections({ sections }: CategoryBlogSectionsProps) {
+  const visibleSections = sections.filter(
+    (section) => section?.title && section?.href && section.posts?.length,
+  );
+
   return (
     <section className="mt-4 grid gap-4">
-      {sections.map((section, index) => (
+      {visibleSections.map((section, index) => (
         <TopicModule key={section.title} section={section} variant={index % 4} />
       ))}
     </section>
@@ -18,13 +22,20 @@ export function CategoryBlogSections({ sections }: CategoryBlogSectionsProps) {
 }
 
 function TopicModule({ section, variant }: { section: TopicBlogSection; variant: number }) {
+  const posts = section.posts.filter(Boolean);
+  const layout = posts.length < 3 ? 0 : variant;
+
+  if (posts.length === 0) {
+    return null;
+  }
+
   return (
     <section id={section.slug} className="rounded-lg border border-fp-line bg-white p-4 shadow-card sm:p-5">
       <SectionHeader title={section.title} href={section.href} />
-      {variant === 0 ? <HeroAndList posts={section.posts} /> : null}
-      {variant === 1 ? <MosaicGrid posts={section.posts} /> : null}
-      {variant === 2 ? <ListLedLayout posts={section.posts} /> : null}
-      {variant === 3 ? <WideRowLayout posts={section.posts} /> : null}
+      {layout === 0 ? <HeroAndList posts={posts} /> : null}
+      {layout === 1 ? <MosaicGrid posts={posts} /> : null}
+      {layout === 2 ? <ListLedLayout posts={posts} /> : null}
+      {layout === 3 ? <WideRowLayout posts={posts} /> : null}
     </section>
   );
 }
@@ -65,8 +76,8 @@ function MosaicGrid({ posts }: { posts: Article[] }) {
           </a>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <OverlayPost post={second} className="min-h-[16rem]" />
-          <OverlayPost post={third} className="min-h-[16rem]" />
+          {second ? <OverlayPost post={second} className="min-h-[16rem]" /> : null}
+          {third ? <OverlayPost post={third} className="min-h-[16rem]" /> : null}
         </div>
       </div>
       <MorePostGrid posts={morePosts} />
@@ -125,8 +136,8 @@ function WideRowLayout({ posts }: { posts: Article[] }) {
         </span>
       </a>
       <div className="grid gap-4 sm:grid-cols-2">
-        <CompactRow post={second} />
-        <CompactRow post={third} />
+        {second ? <CompactRow post={second} /> : null}
+        {third ? <CompactRow post={third} /> : null}
       </div>
       <MorePostGrid posts={morePosts} />
     </div>

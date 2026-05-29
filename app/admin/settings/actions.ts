@@ -1,5 +1,6 @@
 "use server";
 
+import { randomBytes } from "node:crypto";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -83,6 +84,42 @@ export async function saveSettings(
   revalidatePath("/admin/settings");
 
   return { ok: true, savedAt: Date.now() };
+}
+
+export type GenerateSecretState = {
+  ok: boolean;
+  error?: string;
+  /** The freshly generated plaintext, shown once so the admin can copy it to env. */
+  secret?: string;
+};
+
+/**
+ * Generate a strong CRON_SECRET, store it encrypted, and return the plaintext
+ * once. The admin copies it into the host's CRON_SECRET env var so Vercel Cron
+ * and the saved value match. Superadmin-only; requires the encryption key.
+ */
+export async function generateCronSecret(
+  // Signature is fixed by React's useActionState; this action ignores its input.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _prev: GenerateSecretState,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _formData: FormData,
+): Promise<GenerateSecretState> {
+  await requireSuperadmin();
+  if (!hasEncryptionKey()) {
+    return { ok: false, error: "SETTINGS_ENCRYPTION_KEY is not set — cannot store the secret securely." };
+  }
+
+  const secret = randomBytes(32).toString("base64url");
+  try {
+    await writeSetting("CRON_SECRET", encryptSecret(secret), true);
+  } catch {
+    return { ok: false, error: "Could not save the generated secret. Please try again." };
+  }
+
+  revalidateTag(SETTINGS_CACHE_TAG, "max");
+  revalidatePath("/admin/settings");
+  return { ok: true, secret };
 }
 
 function writeSetting(key: SettingKey, value: string, encrypted: boolean) {

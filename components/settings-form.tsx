@@ -33,7 +33,7 @@ export function SettingsForm({ status }: SettingsFormProps) {
         </p>
       ) : null}
 
-      {SETTING_GROUPS.map((group) => (
+      {SETTING_GROUPS.filter((group) => group.id !== "cron").map((group) => (
         <section key={group.id} className="rounded-lg border border-fp-line bg-white p-5 shadow-card sm:p-6">
           <h2 className="text-lg font-bold text-fp-ink">{group.title}</h2>
           <p className="mt-1 text-sm font-semibold text-fp-muted">{group.description}</p>

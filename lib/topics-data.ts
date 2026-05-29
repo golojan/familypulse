@@ -239,6 +239,7 @@ export async function listTopicSectionsForLanding(limit = 7): Promise<TopicBlogS
   try {
     await ensureDefaultTopics();
     const topics = await prisma.topic.findMany({
+      where: { parentId: null },
       include: {
         posts: {
           where: { status: "PUBLISHED" },
@@ -250,7 +251,7 @@ export async function listTopicSectionsForLanding(limit = 7): Promise<TopicBlogS
     });
     const fallbackBySlug = new Map(fallbackTopicSections.map((section) => [section.slug, section]));
 
-    return topics
+    const sections = topics
       .sort((a, b) => topicOrder(a.slug) - topicOrder(b.slug))
       .map((topic) => {
         const posts = topic.posts.map(dbPostToArticle);
@@ -263,6 +264,8 @@ export async function listTopicSectionsForLanding(limit = 7): Promise<TopicBlogS
           posts: posts.length ? posts : fallback?.posts ?? [],
         };
       });
+
+    return sections.filter((section) => section.posts.length > 0);
   } catch (error) {
     warnTopicStoreFallback(error);
     return fallbackTopicSections;

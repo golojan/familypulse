@@ -168,3 +168,31 @@ model SiteSetting {
   encrypted Boolean  @default(false)
   updatedAt DateTime @updatedAt
 }
+
+enum AiDraftRunStatus {
+  SUCCESS
+  PARTIAL
+  FAILED
+}
+
+/// Audit + interval gate for the scheduled AI draft generator. The most recent
+/// row's `createdAt` is what the cron route compares against the configured
+/// interval to decide whether enough time has elapsed to run again.
+model AiDraftRun {
+  id        String           @id @default(cuid())
+  status    AiDraftRunStatus
+  provider  String
+  model     String
+  /// How the run was started: "cron" (scheduled) or "manual" (admin button).
+  trigger   String           @default("cron")
+  /// Number of draft posts created by this run.
+  created   Int              @default(0)
+  /// Free-text error/summary for the admin UI when something went wrong.
+  detail    String?
+  /// Ids of posts created, for traceability.
+  postIds   String[]         @default([])
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}

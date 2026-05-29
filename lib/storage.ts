@@ -327,6 +327,45 @@ export async function presignMediaLibraryUpload(opts: {
   };
 }
 
+/**
+ * Server-side upload of bytes we already hold (rather than presigning a browser
+ * PUT). Used by the AI draft generator to store cover images it fetched from the
+ * image provider. Returns the object key + public URL.
+ */
+export async function uploadGeneratedImage(opts: {
+  body: Buffer;
+  contentType: string;
+  /** Path segment grouping these objects, e.g. "ai-drafts". */
+  prefix?: string;
+}): Promise<{ key: string; publicUrl: string; contentType: string; size: number }> {
+  if (!ALLOWED_IMAGE_TYPES.has(opts.contentType)) {
+    throw new Error(`Unsupported image type: ${opts.contentType}`);
+  }
+  const ext = EXT_BY_TYPE[opts.contentType] ?? "png";
+  const id = randomBytes(12).toString("hex");
+  const key = `${opts.prefix ?? "ai-drafts"}/${id}.${ext}`;
+
+  const cfg = await getSpaces();
+  await cfg.client.send(
+    new PutObjectCommand({
+      Bucket: cfg.bucket,
+      Key: key,
+      Body: opts.body,
+      ContentType: opts.contentType,
+      ContentLength: opts.body.byteLength,
+      ACL: "public-read",
+      CacheControl: "public, max-age=31536000, immutable",
+    }),
+  );
+
+  return {
+    key,
+    publicUrl: buildPublicUrl(cfg, key),
+    contentType: opts.contentType,
+    size: opts.body.byteLength,
+  };
+}
+
 export async function deleteStoredObject(key: string) {
   const cfg = await getSpaces();
   await cfg.client.send(

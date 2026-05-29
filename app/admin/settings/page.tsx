@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { getSettingsStatus } from "@/lib/settings";
 import { hasEncryptionKey } from "@/lib/crypto";
 import { SettingsForm } from "@/components/settings-form";
+import { CronSecretGenerator } from "@/components/cron-secret-generator";
 
 export const metadata = {
   title: "Site Settings · FamilyPulse",
@@ -67,8 +68,9 @@ export default async function AdminSettingsPage() {
           </div>
         ) : null}
 
-        <div className="mt-6">
+        <div className="mt-6 grid gap-6">
           <SettingsForm status={status} />
+          <CronSecretGenerator configured={status.CRON_SECRET.configured} />
         </div>
       </div>
     </main>
