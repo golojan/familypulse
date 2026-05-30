@@ -8,7 +8,11 @@ export function QuickTopics({ topics }: { topics: QuickTopic[] }) {
       <SectionHeader title="Quick Topics" compact />
       <div className="space-y-2">
         {topics.map(({ icon: TopicIcon, title, desc }) => (
-          <a key={title} href="#" className="flex items-center gap-3 rounded-2xl bg-white p-3 transition hover:shadow-soft">
+          <a
+            key={title}
+            href="#"
+            className="flex items-center gap-3 rounded-2xl bg-white p-3 transition hover:shadow-soft"
+          >
             <span className="grid h-11 w-11 place-items-center rounded-2xl bg-fp-mint text-fp-green">
               <TopicIcon className="h-5 w-5" />
             </span>

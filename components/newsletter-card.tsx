@@ -8,11 +8,20 @@ export function NewsletterCard() {
           <Mail className="h-8 w-8" />
         </span>
         <div className="flex-1">
-          <h2 className="text-2xl font-bold text-fp-ink">Stay Inspired. Get Weekly Family Insights.</h2>
-          <p className="mt-1 text-sm font-semibold leading-6 text-fp-muted">Practical tips, inspiring stories and podcast updates delivered to your inbox.</p>
+          <h2 className="text-2xl font-bold text-fp-ink">
+            Stay Inspired. Get Weekly Family Insights.
+          </h2>
+          <p className="mt-1 text-sm font-semibold leading-6 text-fp-muted">
+            Practical tips, inspiring stories and podcast updates delivered to your inbox.
+          </p>
           <form className="mt-4 flex flex-col gap-3 sm:flex-row">
-            <input className="min-h-12 flex-1 rounded-md border border-fp-line bg-white px-4 text-sm font-semibold outline-none ring-fp-green/20 focus:ring-4" placeholder="Enter your email address" />
-            <button className="rounded-md bg-fp-green px-6 py-3 text-sm font-extrabold !text-white shadow-green">Subscribe</button>
+            <input
+              className="min-h-12 flex-1 rounded-md border border-fp-line bg-white px-4 text-sm font-semibold outline-none ring-fp-green/20 focus:ring-4"
+              placeholder="Enter your email address"
+            />
+            <button className="rounded-md bg-fp-green px-6 py-3 text-sm font-extrabold !text-white shadow-green">
+              Subscribe
+            </button>
           </form>
         </div>
       </div>

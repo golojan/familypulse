@@ -18,12 +18,7 @@ import {
   Trash2,
   Video,
 } from "lucide-react";
-import {
-  BLOCK_LABELS,
-  createBlock,
-  type Block,
-  type BlockType,
-} from "@/lib/posts";
+import { BLOCK_LABELS, createBlock, type Block, type BlockType } from "@/lib/posts";
 import type { TopicOption } from "@/lib/topics-data";
 import { savePost, type ActionState } from "@/app/dashboard/posts/actions";
 import { MediaUploadField } from "./media-upload-field";
@@ -76,10 +71,7 @@ export function PostEditor({
   );
 
   // Both submit buttons share one form; `mode` is bound per-button via the action.
-  const saveDraft = useMemo(
-    () => savePost.bind(null, postId, "draft"),
-    [postId],
-  );
+  const saveDraft = useMemo(() => savePost.bind(null, postId, "draft"), [postId]);
   const publish = useMemo(() => savePost.bind(null, postId, "publish"), [postId]);
 
   const [draftState, draftAction] = useActionState(saveDraft, INITIAL);
@@ -90,9 +82,7 @@ export function PostEditor({
   const isPublished = status === "PUBLISHED";
 
   function update(id: string, patch: Partial<Block>) {
-    setBlocks((prev) =>
-      prev.map((b) => (b.id === id ? ({ ...b, ...patch } as Block) : b)),
-    );
+    setBlocks((prev) => prev.map((b) => (b.id === id ? ({ ...b, ...patch } as Block) : b)));
   }
 
   function add(type: BlockType) {
@@ -124,9 +114,7 @@ export function PostEditor({
       setCover(uploadedUrl);
     } catch (error) {
       setCoverGenerationError(
-        error instanceof Error
-          ? error.message
-          : "Could not generate a cover from this video.",
+        error instanceof Error ? error.message : "Could not generate a cover from this video.",
       );
     } finally {
       setCoverGenerating(false);
@@ -141,17 +129,47 @@ export function PostEditor({
         <div>
           <p className="text-sm font-extrabold text-fp-ink">Post actions</p>
           <p className="mt-1 text-xs font-semibold text-fp-muted">
-            {isPublished ? "Published posts are locked. Unpublish before editing or saving drafts." : "Save a draft or publish from here."}
+            {isPublished
+              ? "Published posts are locked. Unpublish before editing or saving drafts."
+              : "Save a draft or publish from here."}
           </p>
         </div>
         <div className="flex gap-2">
           <form action={draftAction}>
-            <HiddenFields audioUrl={audioUrl} blocks={serializedBlocks} cover={cover} postType={postType} title={title} topicId={topicId} videoUrl={videoUrl} />
-            <SubmitButton disabled={isPublished} variant="secondary" icon={Save} label="Save draft" pendingLabel="Saving..." />
+            <HiddenFields
+              audioUrl={audioUrl}
+              blocks={serializedBlocks}
+              cover={cover}
+              postType={postType}
+              title={title}
+              topicId={topicId}
+              videoUrl={videoUrl}
+            />
+            <SubmitButton
+              disabled={isPublished}
+              variant="secondary"
+              icon={Save}
+              label="Save draft"
+              pendingLabel="Saving..."
+            />
           </form>
           <form action={publishAction}>
-            <HiddenFields audioUrl={audioUrl} blocks={serializedBlocks} cover={cover} postType={postType} title={title} topicId={topicId} videoUrl={videoUrl} />
-            <SubmitButton disabled={isPublished} variant="primary" icon={Send} label={isPublished ? "Published" : "Publish"} pendingLabel="Publishing..." />
+            <HiddenFields
+              audioUrl={audioUrl}
+              blocks={serializedBlocks}
+              cover={cover}
+              postType={postType}
+              title={title}
+              topicId={topicId}
+              videoUrl={videoUrl}
+            />
+            <SubmitButton
+              disabled={isPublished}
+              variant="primary"
+              icon={Send}
+              label={isPublished ? "Published" : "Publish"}
+              pendingLabel="Publishing..."
+            />
           </form>
         </div>
       </div>
@@ -251,11 +269,20 @@ export function PostEditor({
             </p>
             {cover ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={cover} alt="" className="mt-3 aspect-video w-full rounded-md border border-fp-line object-cover" />
+              <img
+                src={cover}
+                alt=""
+                className="mt-3 aspect-video w-full rounded-md border border-fp-line object-cover"
+              />
             ) : null}
             {isPublished ? null : (
               <div className="mt-3">
-                <MediaUploadField accept="image/*" kind="IMAGE" label="Drop or upload cover" onUploaded={setCover} />
+                <MediaUploadField
+                  accept="image/*"
+                  kind="IMAGE"
+                  label="Drop or upload cover"
+                  onUploaded={setCover}
+                />
               </div>
             )}
           </div>
@@ -278,7 +305,12 @@ export function PostEditor({
               </label>
               {isPublished ? null : (
                 <div className="mt-3 grid gap-3">
-                  <MediaUploadField accept="video/*" kind="VIDEO" label="Drop or upload video" onUploaded={setVideoUrl} />
+                  <MediaUploadField
+                    accept="video/*"
+                    kind="VIDEO"
+                    label="Drop or upload video"
+                    onUploaded={setVideoUrl}
+                  />
                   <button
                     type="button"
                     onClick={generateCoverFromVideo}
@@ -314,45 +346,76 @@ export function PostEditor({
               </label>
               {isPublished ? null : (
                 <div className="mt-3">
-                  <MediaUploadField accept="audio/*" kind="AUDIO" label="Drop or upload audio" onUploaded={setAudioUrl} />
+                  <MediaUploadField
+                    accept="audio/*"
+                    kind="AUDIO"
+                    label="Drop or upload audio"
+                    onUploaded={setAudioUrl}
+                  />
                 </div>
               )}
             </div>
           ) : null}
 
-        <div className="rounded-lg border border-fp-line bg-white p-5 shadow-card">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-extrabold text-fp-ink">Status</span>
-            <StatusPill status={status} />
-          </div>
+          <div className="rounded-lg border border-fp-line bg-white p-5 shadow-card">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-extrabold text-fp-ink">Status</span>
+              <StatusPill status={status} />
+            </div>
 
-          {formError ? (
-            <p className="mt-3 rounded-md bg-red-50 px-3 py-2 text-sm font-bold text-red-600" aria-live="polite">
-              {formError}
+            {formError ? (
+              <p
+                className="mt-3 rounded-md bg-red-50 px-3 py-2 text-sm font-bold text-red-600"
+                aria-live="polite"
+              >
+                {formError}
+              </p>
+            ) : null}
+
+            <p className="mt-3 text-sm font-semibold leading-6 text-fp-muted">
+              Save your work as a draft, or publish it to make it live on FamilyPulse.
             </p>
-          ) : null}
 
-          <p className="mt-3 text-sm font-semibold leading-6 text-fp-muted">
-            Save your work as a draft, or publish it to make it live on FamilyPulse.
-          </p>
+            <div
+              className={`mt-5 grid gap-3 ${isPublished ? "pointer-events-none opacity-60" : ""}`}
+            >
+              <form action={draftAction}>
+                <HiddenFields
+                  audioUrl={audioUrl}
+                  blocks={serializedBlocks}
+                  cover={cover}
+                  postType={postType}
+                  title={title}
+                  topicId={topicId}
+                  videoUrl={videoUrl}
+                />
+                <SubmitButton
+                  variant="secondary"
+                  icon={Save}
+                  label="Save draft"
+                  pendingLabel="Saving…"
+                />
+              </form>
 
-          <div className={`mt-5 grid gap-3 ${isPublished ? "pointer-events-none opacity-60" : ""}`}>
-            <form action={draftAction}>
-              <HiddenFields audioUrl={audioUrl} blocks={serializedBlocks} cover={cover} postType={postType} title={title} topicId={topicId} videoUrl={videoUrl} />
-              <SubmitButton variant="secondary" icon={Save} label="Save draft" pendingLabel="Saving…" />
-            </form>
-
-            <form action={publishAction}>
-              <HiddenFields audioUrl={audioUrl} blocks={serializedBlocks} cover={cover} postType={postType} title={title} topicId={topicId} videoUrl={videoUrl} />
-              <SubmitButton
-                variant="primary"
-                icon={Send}
-                label={status === "PUBLISHED" ? "Update & republish" : "Publish"}
-                pendingLabel="Publishing…"
-              />
-            </form>
+              <form action={publishAction}>
+                <HiddenFields
+                  audioUrl={audioUrl}
+                  blocks={serializedBlocks}
+                  cover={cover}
+                  postType={postType}
+                  title={title}
+                  topicId={topicId}
+                  videoUrl={videoUrl}
+                />
+                <SubmitButton
+                  variant="primary"
+                  icon={Send}
+                  label={status === "PUBLISHED" ? "Update & republish" : "Publish"}
+                  pendingLabel="Publishing…"
+                />
+              </form>
+            </div>
           </div>
-        </div>
         </div>
       </aside>
     </div>
@@ -599,7 +662,11 @@ function BlockCard({
           <IconBtn label="Move up" disabled={locked || index === 0} onClick={() => onMove(-1)}>
             <ArrowUp className="h-4 w-4" />
           </IconBtn>
-          <IconBtn label="Move down" disabled={locked || index === total - 1} onClick={() => onMove(1)}>
+          <IconBtn
+            label="Move down"
+            disabled={locked || index === total - 1}
+            onClick={() => onMove(1)}
+          >
             <ArrowDown className="h-4 w-4" />
           </IconBtn>
           <IconBtn label="Delete block" disabled={locked} onClick={onRemove} danger>
@@ -633,7 +700,9 @@ function IconBtn({
       onClick={onClick}
       disabled={disabled}
       className={`grid h-8 w-8 place-items-center rounded-md border border-fp-line bg-white text-fp-muted disabled:opacity-30 ${
-        danger ? "hover:border-red-300 hover:text-red-600" : "hover:border-fp-green hover:text-fp-green"
+        danger
+          ? "hover:border-red-300 hover:text-red-600"
+          : "hover:border-fp-green hover:text-fp-green"
       }`}
     >
       {children}

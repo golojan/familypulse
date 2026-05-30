@@ -26,7 +26,8 @@ export default async function SignInPage({
             Sign in to FamilyPulse
           </h1>
           <p className="mt-4 max-w-md text-sm font-semibold leading-6 text-white/85 sm:text-base">
-            Access saved articles, podcast updates, member resources, and your family learning dashboard.
+            Access saved articles, podcast updates, member resources, and your family learning
+            dashboard.
           </p>
         </section>
 

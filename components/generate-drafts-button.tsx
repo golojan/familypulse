@@ -14,12 +14,18 @@ export function GenerateDraftsButton({ disabled }: { disabled?: boolean }) {
     <form action={action} className="grid gap-3">
       <SubmitButton disabled={disabled} />
       {state.error ? (
-        <p className="rounded-md bg-red-50 px-4 py-3 text-sm font-bold text-red-600" aria-live="polite">
+        <p
+          className="rounded-md bg-red-50 px-4 py-3 text-sm font-bold text-red-600"
+          aria-live="polite"
+        >
           {state.error}
         </p>
       ) : null}
       {state.ok && state.message ? (
-        <p className="rounded-md bg-fp-green/10 px-4 py-3 text-sm font-bold text-fp-green" aria-live="polite">
+        <p
+          className="rounded-md bg-fp-green/10 px-4 py-3 text-sm font-bold text-fp-green"
+          aria-live="polite"
+        >
           {state.message}
         </p>
       ) : null}

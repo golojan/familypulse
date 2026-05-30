@@ -6,9 +6,7 @@ export function Logo() {
       <div className="grid h-9 w-9 place-items-center rounded-full border border-fp-green/20 bg-fp-mint text-fp-green shadow-soft sm:h-10 sm:w-10">
         <Heart className="h-5 w-5" fill="currentColor" />
       </div>
-      <span className="text-[1.45rem] font-extrabold text-fp-green sm:text-3xl">
-        FamilyPulse
-      </span>
+      <span className="text-[1.45rem] font-extrabold text-fp-green sm:text-3xl">FamilyPulse</span>
     </div>
   );
 }

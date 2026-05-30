@@ -50,7 +50,10 @@ export async function listPostsByAuthor(authorId: string): Promise<PostListItem[
 }
 
 /** A single post owned by `authorId`, shaped for the editor. Null if missing or not owned. */
-export async function getPostForEditor(id: string, authorId: string): Promise<PostEditorData | null> {
+export async function getPostForEditor(
+  id: string,
+  authorId: string,
+): Promise<PostEditorData | null> {
   const post = await prisma.post.findFirst({
     where: { id, authorId },
     select: {

@@ -27,7 +27,10 @@ export default async function MediaLibraryPage() {
   return (
     <main className="min-h-screen bg-background px-4 py-8 font-sans text-fp-ink sm:px-6 lg:px-10">
       <div className="mx-auto max-w-6xl">
-        <Link href="/dashboard" className="inline-flex items-center gap-1.5 text-sm font-extrabold text-fp-muted hover:text-fp-green">
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center gap-1.5 text-sm font-extrabold text-fp-muted hover:text-fp-green"
+        >
           <ArrowLeft className="h-4 w-4" />
           Back to dashboard
         </Link>

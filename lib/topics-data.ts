@@ -127,7 +127,10 @@ function dbPostToArticle(post: DbPost): PostPageData {
   const blocks = parseBlocks(post.blocks);
   const topicTitle = post.topic?.title ?? "Family Life";
   const topicSlug = post.topic?.slug ?? slugify(topicTitle);
-  const cover = post.coverImage ?? deriveCover(blocks) ?? "https://images.unsplash.com/photo-1609220136736-443140cffec6?auto=format&fit=crop&w=900&q=80";
+  const cover =
+    post.coverImage ??
+    deriveCover(blocks) ??
+    "https://images.unsplash.com/photo-1609220136736-443140cffec6?auto=format&fit=crop&w=900&q=80";
 
   return {
     id: post.id,
@@ -261,7 +264,7 @@ export async function listTopicSectionsForLanding(limit = 7): Promise<TopicBlogS
           title: topic.title,
           slug: topic.slug,
           href: `/topics/${topic.slug}`,
-          posts: posts.length ? posts : fallback?.posts ?? [],
+          posts: posts.length ? posts : (fallback?.posts ?? []),
         };
       });
 
@@ -292,7 +295,9 @@ export async function getTopicPageData(slug: string) {
 
     return {
       topic: toTopic(topic),
-      posts: topic.posts.length ? topic.posts.map(dbPostToArticle) : getFallbackPostsByTopicSlug(slug),
+      posts: topic.posts.length
+        ? topic.posts.map(dbPostToArticle)
+        : getFallbackPostsByTopicSlug(slug),
     };
   } catch (error) {
     warnTopicStoreFallback(error);
@@ -333,8 +338,14 @@ export async function getPostPageData(slug: string): Promise<PostPageResult | nu
     return {
       post: fallbackArticleToPostPageData(fallbackPost),
       relatedPosts: fallbackPost.topicSlug
-        ? getFallbackPostsByTopicSlug(fallbackPost.topicSlug).filter((item) => item.slug !== fallbackPost.slug).slice(0, 3).map(fallbackArticleToPostPageData)
-        : fallbackPosts.filter((item) => item.slug !== fallbackPost.slug).slice(0, 3).map(fallbackArticleToPostPageData),
+        ? getFallbackPostsByTopicSlug(fallbackPost.topicSlug)
+            .filter((item) => item.slug !== fallbackPost.slug)
+            .slice(0, 3)
+            .map(fallbackArticleToPostPageData)
+        : fallbackPosts
+            .filter((item) => item.slug !== fallbackPost.slug)
+            .slice(0, 3)
+            .map(fallbackArticleToPostPageData),
     };
   }
 

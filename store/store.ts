@@ -7,8 +7,7 @@ export function makeStore() {
     reducer: {
       [coreApi.reducerPath]: coreApi.reducer,
     },
-    middleware: (getDefaultMiddleware) =>
-      getDefaultMiddleware().concat(coreApi.middleware),
+    middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(coreApi.middleware),
   });
 
   setupListeners(store.dispatch);

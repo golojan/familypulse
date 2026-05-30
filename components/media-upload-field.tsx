@@ -87,10 +87,16 @@ export function MediaUploadField({ label, accept, kind, onUploaded }: MediaUploa
         }}
         disabled={state === "uploading"}
         className={`inline-flex min-h-24 items-center justify-center gap-2 rounded-md border border-dashed px-3 text-sm font-extrabold disabled:opacity-60 ${
-          dragging ? "border-fp-green bg-fp-mint text-fp-green" : "border-fp-line bg-fp-soft text-fp-ink hover:border-fp-green hover:text-fp-green"
+          dragging
+            ? "border-fp-green bg-fp-mint text-fp-green"
+            : "border-fp-line bg-fp-soft text-fp-ink hover:border-fp-green hover:text-fp-green"
         }`}
       >
-        {state === "uploading" ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
+        {state === "uploading" ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <UploadCloud className="h-4 w-4" />
+        )}
         {state === "uploading" ? "Uploading..." : label}
       </button>
       <input

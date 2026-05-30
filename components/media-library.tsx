@@ -21,10 +21,30 @@ export function MediaLibrary({ assets }: { assets: MediaAssetItem[] }) {
           Files upload directly to DigitalOcean Spaces using signed URLs and are tracked here.
         </p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <MediaUploadField accept="image/*" kind="IMAGE" label="Upload image" onUploaded={() => window.location.reload()} />
-          <MediaUploadField accept="video/*" kind="VIDEO" label="Upload video" onUploaded={() => window.location.reload()} />
-          <MediaUploadField accept="audio/*" kind="AUDIO" label="Upload audio" onUploaded={() => window.location.reload()} />
-          <MediaUploadField accept="application/pdf" kind="DOCUMENT" label="Upload document" onUploaded={() => window.location.reload()} />
+          <MediaUploadField
+            accept="image/*"
+            kind="IMAGE"
+            label="Upload image"
+            onUploaded={() => window.location.reload()}
+          />
+          <MediaUploadField
+            accept="video/*"
+            kind="VIDEO"
+            label="Upload video"
+            onUploaded={() => window.location.reload()}
+          />
+          <MediaUploadField
+            accept="audio/*"
+            kind="AUDIO"
+            label="Upload audio"
+            onUploaded={() => window.location.reload()}
+          />
+          <MediaUploadField
+            accept="application/pdf"
+            kind="DOCUMENT"
+            label="Upload document"
+            onUploaded={() => window.location.reload()}
+          />
         </div>
       </section>
 
@@ -32,7 +52,9 @@ export function MediaLibrary({ assets }: { assets: MediaAssetItem[] }) {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-bold text-fp-ink">Media library</h2>
-            <p className="mt-1 text-sm font-semibold text-fp-muted">{visibleAssets.length} item{visibleAssets.length === 1 ? "" : "s"}</p>
+            <p className="mt-1 text-sm font-semibold text-fp-muted">
+              {visibleAssets.length} item{visibleAssets.length === 1 ? "" : "s"}
+            </p>
           </div>
           <div className="flex flex-wrap gap-2">
             {KIND_FILTERS.map((kind) => (
@@ -41,7 +63,9 @@ export function MediaLibrary({ assets }: { assets: MediaAssetItem[] }) {
                 type="button"
                 onClick={() => setFilter(kind)}
                 className={`rounded-md px-3 py-2 text-xs font-extrabold ${
-                  filter === kind ? "bg-fp-green !text-white" : "border border-fp-line bg-white text-fp-muted"
+                  filter === kind
+                    ? "bg-fp-green !text-white"
+                    : "border border-fp-line bg-white text-fp-muted"
                 }`}
               >
                 {kind === "ALL" ? "All" : kind.toLowerCase()}
@@ -68,7 +92,13 @@ function MediaCard({ asset }: { asset: MediaAssetItem }) {
     <article className="overflow-hidden rounded-md border border-fp-line bg-fp-soft">
       <div className="relative grid aspect-video place-items-center bg-white">
         {asset.kind === "IMAGE" ? (
-          <Image src={asset.url} alt={asset.alt ?? asset.filename} fill className="object-cover" sizes="(max-width: 1280px) 50vw, 33vw" />
+          <Image
+            src={asset.url}
+            alt={asset.alt ?? asset.filename}
+            fill
+            className="object-cover"
+            sizes="(max-width: 1280px) 50vw, 33vw"
+          />
         ) : asset.kind === "VIDEO" ? (
           <video src={asset.url} className="h-full w-full object-cover" controls />
         ) : asset.kind === "AUDIO" ? (
@@ -85,14 +115,27 @@ function MediaCard({ asset }: { asset: MediaAssetItem }) {
         {editing ? (
           <form action={updateMediaAsset} className="grid gap-2" onSubmit={() => setEditing(false)}>
             <input type="hidden" name="id" value={asset.id} />
-            <input className="rounded-md border border-fp-line px-3 py-2 text-sm font-semibold outline-none" name="filename" defaultValue={asset.filename} />
-            <input className="rounded-md border border-fp-line px-3 py-2 text-sm font-semibold outline-none" name="alt" defaultValue={asset.alt ?? ""} placeholder="Alt text" />
-            <button className="rounded-md bg-fp-green px-3 py-2 text-sm font-extrabold !text-white">Save</button>
+            <input
+              className="rounded-md border border-fp-line px-3 py-2 text-sm font-semibold outline-none"
+              name="filename"
+              defaultValue={asset.filename}
+            />
+            <input
+              className="rounded-md border border-fp-line px-3 py-2 text-sm font-semibold outline-none"
+              name="alt"
+              defaultValue={asset.alt ?? ""}
+              placeholder="Alt text"
+            />
+            <button className="rounded-md bg-fp-green px-3 py-2 text-sm font-extrabold !text-white">
+              Save
+            </button>
           </form>
         ) : (
           <>
             <h3 className="truncate text-sm font-extrabold text-fp-ink">{asset.filename}</h3>
-            <p className="mt-1 text-xs font-semibold text-fp-muted">{asset.status.toLowerCase()} · {formatBytes(asset.size)}</p>
+            <p className="mt-1 text-xs font-semibold text-fp-muted">
+              {asset.status.toLowerCase()} · {formatBytes(asset.size)}
+            </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <button
                 type="button"
@@ -119,7 +162,11 @@ function MediaCard({ asset }: { asset: MediaAssetItem }) {
                 }}
                 className="inline-flex items-center gap-1.5 rounded-md border border-red-200 bg-white px-3 py-1.5 text-xs font-extrabold text-red-600 disabled:opacity-60"
               >
-                {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                {pending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Trash2 className="h-3.5 w-3.5" />
+                )}
                 Delete
               </button>
             </div>

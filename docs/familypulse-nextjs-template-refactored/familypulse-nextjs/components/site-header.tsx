@@ -21,13 +21,20 @@ export function SiteHeader() {
               {item} <ChevronDown className="h-4 w-4" />
             </a>
           ))}
-          <a className="hover:text-fp-green" href="#podcast">Podcast</a>
-          <a className="hover:text-fp-green" href="#videos">Videos</a>
+          <a className="hover:text-fp-green" href="#podcast">
+            Podcast
+          </a>
+          <a className="hover:text-fp-green" href="#videos">
+            Videos
+          </a>
         </nav>
 
         <div className="flex items-center gap-2 sm:gap-3">
           <label className="hidden h-12 w-[270px] items-center gap-2 rounded-2xl border border-fp-line bg-white px-4 text-sm font-semibold text-fp-muted shadow-soft xl:flex">
-            <input className="w-full bg-transparent outline-none" placeholder="Search articles, podcast..." />
+            <input
+              className="w-full bg-transparent outline-none"
+              placeholder="Search articles, podcast..."
+            />
             <Search className="h-5 w-5 text-fp-green" />
           </label>
           <button className="grid h-11 w-11 place-items-center rounded-2xl border border-fp-line bg-white text-fp-ink shadow-soft xl:hidden">

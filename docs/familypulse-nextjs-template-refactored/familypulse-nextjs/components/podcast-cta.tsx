@@ -13,13 +13,21 @@ export function PodcastCTA() {
             <p className="mt-1 text-lg font-semibold text-white/85">New episodes weekly!</p>
           </div>
         </div>
-        <a className="inline-flex items-center justify-center gap-3 rounded-full bg-white px-7 py-4 text-sm font-black text-fp-ink" href="#">
-          <Headphones className="h-5 w-5 text-fp-green" /> Listen Now <ChevronRight className="h-5 w-5" />
+        <a
+          className="inline-flex items-center justify-center gap-3 rounded-full bg-white px-7 py-4 text-sm font-black text-fp-ink"
+          href="#"
+        >
+          <Headphones className="h-5 w-5 text-fp-green" /> Listen Now{" "}
+          <ChevronRight className="h-5 w-5" />
         </a>
       </div>
       <div className="mt-8 flex h-10 items-center gap-[4px] opacity-45">
         {Array.from({ length: 88 }).map((_, i) => (
-          <span key={i} className="w-[3px] rounded-full bg-white" style={{ height: `${8 + ((i * 7) % 32)}px` }} />
+          <span
+            key={i}
+            className="w-[3px] rounded-full bg-white"
+            style={{ height: `${8 + ((i * 7) % 32)}px` }}
+          />
         ))}
       </div>
     </div>

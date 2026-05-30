@@ -83,8 +83,7 @@ export async function getSettingsStatus(): Promise<Record<SettingKey, SettingSta
   const out = {} as Record<SettingKey, SettingStatus>;
   for (const field of SETTING_FIELDS) {
     const row = byKey.get(field.key);
-    const dbValue =
-      row?.value && row.encrypted ? decryptSecret(row.value) : (row?.value ?? null);
+    const dbValue = row?.value && row.encrypted ? decryptSecret(row.value) : (row?.value ?? null);
     const hasDbValue = Boolean(dbValue && dbValue !== "");
     const envValue = process.env[field.key];
     const hasEnvValue = Boolean(envValue && envValue !== "");

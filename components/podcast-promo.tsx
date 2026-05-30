@@ -14,10 +14,17 @@ export function PodcastPromo() {
       </div>
       <div className="my-5 flex h-9 items-center gap-[3px] opacity-45">
         {Array.from({ length: 52 }).map((_, i) => (
-          <span key={i} className="w-[2px] rounded-full bg-white" style={{ height: `${7 + ((i * 7) % 25)}px` }} />
+          <span
+            key={i}
+            className="w-[2px] rounded-full bg-white"
+            style={{ height: `${7 + ((i * 7) % 25)}px` }}
+          />
         ))}
       </div>
-      <a className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-white px-4 py-3 text-sm font-extrabold text-fp-green" href="#podcast">
+      <a
+        className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-white px-4 py-3 text-sm font-extrabold text-fp-green"
+        href="#podcast"
+      >
         <Play className="h-4 w-4" fill="currentColor" /> Listen Now
       </a>
     </section>

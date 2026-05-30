@@ -53,17 +53,16 @@ export default async function AdminSettingsPage() {
         </Link>
         <h1 className="mt-3 text-3xl font-bold">Site Settings</h1>
         <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-fp-muted">
-          Configure authentication, email, and storage. Saved values are used in
-          preference to environment variables. Secrets are encrypted at rest and
-          never displayed again after saving.
+          Configure authentication, email, and storage. Saved values are used in preference to
+          environment variables. Secrets are encrypted at rest and never displayed again after
+          saving.
         </p>
 
         {!encryptionReady ? (
           <div className="mt-6 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800">
             <p>
-              <code className="font-mono">SETTINGS_ENCRYPTION_KEY</code> is not set on the
-              server. Set it before saving — secret values cannot be stored securely
-              without it.
+              <code className="font-mono">SETTINGS_ENCRYPTION_KEY</code> is not set on the server.
+              Set it before saving — secret values cannot be stored securely without it.
             </p>
           </div>
         ) : null}

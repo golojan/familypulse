@@ -15,7 +15,9 @@ export function NewsCard({ card }: { card: MediaCard }) {
       <div className="pt-4">
         <div className="mb-2 flex items-center justify-between">
           <p className="text-sm font-black text-fp-ink">{card.label}</p>
-          <a href="#" className="text-xs font-black text-fp-green">View all</a>
+          <a href="#" className="text-xs font-black text-fp-green">
+            View all
+          </a>
         </div>
         <h3 className="text-base font-black leading-tight text-fp-ink">{card.title}</h3>
         <p className="mt-3 text-xs font-semibold text-fp-muted">Apr 28, 2024 · 6 min read</p>

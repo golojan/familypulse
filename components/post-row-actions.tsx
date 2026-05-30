@@ -30,9 +30,7 @@ export function PostRowActions({ postId, status }: PostRowActionsProps) {
 
   return (
     <div className="flex items-center gap-2">
-      {pending ? (
-        <Loader2 className="h-4 w-4 animate-spin text-fp-muted" />
-      ) : null}
+      {pending ? <Loader2 className="h-4 w-4 animate-spin text-fp-muted" /> : null}
 
       {status === "PUBLISHED" ? (
         <button

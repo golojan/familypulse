@@ -105,14 +105,62 @@ function withArticleTopic(article: Article, topicTitle: string): Article {
 }
 
 export const topics: Topic[] = [
-  { icon: MessageCircle, title: "Communication", desc: "Build stronger connections", slug: "communication", href: "/topics/communication" },
-  { icon: ShieldCheck, title: "Parenting & Discipline", desc: "Positive guidance that works", slug: "parenting-discipline", href: "/topics/parenting-discipline" },
-  { icon: Heart, title: "Marriage & Relationships", desc: "Stronger together, every day", slug: "marriage-relationships", href: "/topics/marriage-relationships" },
-  { icon: BriefcaseBusiness, title: "Work-Life Balance", desc: "Thrive at home and work", slug: "work-life-balance", href: "/topics/work-life-balance" },
-  { icon: Star, title: "Child Development", desc: "Support your child's growth", slug: "child-development", href: "/topics/child-development" },
-  { icon: Brain, title: "Mental Wellness", desc: "Calm habits for every day", slug: "mental-wellness", href: "/topics/mental-wellness" },
-  { icon: PartyPopper, title: "Family Activities", desc: "Simple ways to connect", slug: "family-activities", href: "/topics/family-activities" },
-  { icon: Home, title: "Faith & Values", desc: "Shared values at home", slug: "faith-values", href: "/topics/faith-values" },
+  {
+    icon: MessageCircle,
+    title: "Communication",
+    desc: "Build stronger connections",
+    slug: "communication",
+    href: "/topics/communication",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Parenting & Discipline",
+    desc: "Positive guidance that works",
+    slug: "parenting-discipline",
+    href: "/topics/parenting-discipline",
+  },
+  {
+    icon: Heart,
+    title: "Marriage & Relationships",
+    desc: "Stronger together, every day",
+    slug: "marriage-relationships",
+    href: "/topics/marriage-relationships",
+  },
+  {
+    icon: BriefcaseBusiness,
+    title: "Work-Life Balance",
+    desc: "Thrive at home and work",
+    slug: "work-life-balance",
+    href: "/topics/work-life-balance",
+  },
+  {
+    icon: Star,
+    title: "Child Development",
+    desc: "Support your child's growth",
+    slug: "child-development",
+    href: "/topics/child-development",
+  },
+  {
+    icon: Brain,
+    title: "Mental Wellness",
+    desc: "Calm habits for every day",
+    slug: "mental-wellness",
+    href: "/topics/mental-wellness",
+  },
+  {
+    icon: PartyPopper,
+    title: "Family Activities",
+    desc: "Simple ways to connect",
+    slug: "family-activities",
+    href: "/topics/family-activities",
+  },
+  {
+    icon: Home,
+    title: "Faith & Values",
+    desc: "Shared values at home",
+    slug: "faith-values",
+    href: "/topics/faith-values",
+  },
 ];
 
 export const articles: Article[] = [
@@ -720,8 +768,8 @@ export const allPosts: Article[] = Array.from(
   new Map(
     topicBlogSections
       .flatMap((section) => section.posts)
-      .map((post) => [post.slug ?? slugify(post.title), post])
-  ).values()
+      .map((post) => [post.slug ?? slugify(post.title), post]),
+  ).values(),
 );
 
 export function getTopicBySlug(slug: string) {

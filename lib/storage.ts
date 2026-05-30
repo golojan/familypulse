@@ -35,10 +35,14 @@ async function getSpaces(): Promise<SpacesConfig> {
   const endpoint = s.DO_SPACES_ENDPOINT ?? `https://${region}.digitaloceanspaces.com`;
 
   if (!s.DO_SPACES_KEY || !s.DO_SPACES_SECRET) {
-    throw new Error("DigitalOcean Spaces credentials are not configured (Site Settings or DO_SPACES_*).");
+    throw new Error(
+      "DigitalOcean Spaces credentials are not configured (Site Settings or DO_SPACES_*).",
+    );
   }
   if (!s.DO_SPACES_BUCKET) {
-    throw new Error("DigitalOcean Spaces bucket is not configured (Site Settings or DO_SPACES_BUCKET).");
+    throw new Error(
+      "DigitalOcean Spaces bucket is not configured (Site Settings or DO_SPACES_BUCKET).",
+    );
   }
 
   return {
@@ -60,8 +64,7 @@ async function getSpaces(): Promise<SpacesConfig> {
 /** Public URL for a stored object — CDN if configured, else the Spaces origin. */
 function buildPublicUrl(cfg: SpacesConfig, key: string): string {
   const base =
-    cfg.cdnEndpoint?.replace(/\/+$/, "") ||
-    `${cfg.endpoint.replace(/\/+$/, "")}/${cfg.bucket}`;
+    cfg.cdnEndpoint?.replace(/\/+$/, "") || `${cfg.endpoint.replace(/\/+$/, "")}/${cfg.bucket}`;
   return `${base}/${key.replace(/^\/+/, "")}`;
 }
 
@@ -71,12 +74,7 @@ export async function publicUrl(key: string): Promise<string> {
   return buildPublicUrl(cfg, key);
 }
 
-const ALLOWED_IMAGE_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-]);
+const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 const ALLOWED_CAMPAIGN_IMAGE_TYPES = new Set(["image/jpeg", "image/png"]);
 const ALLOWED_MESSAGE_MEDIA_TYPES = new Set([
   "image/jpeg",
@@ -116,7 +114,14 @@ const ALLOWED_CAMPAIGN_MEDIA_TYPES = new Set([
 ]);
 const CAMPAIGN_MEDIA_TYPES_BY_CATEGORY: Record<string, Set<string>> = {
   PHOTOS: new Set(["image/jpeg", "image/png", "image/webp"]),
-  JINGLES: new Set(["audio/mp3", "audio/mpeg", "audio/mp4", "audio/wav", "audio/webm", "audio/x-mpeg"]),
+  JINGLES: new Set([
+    "audio/mp3",
+    "audio/mpeg",
+    "audio/mp4",
+    "audio/wav",
+    "audio/webm",
+    "audio/x-mpeg",
+  ]),
   VIDEOS: new Set(["video/mp4", "video/webm"]),
   BANNERS: new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]),
   FLIERS: new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]),

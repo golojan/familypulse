@@ -1,0 +1,18 @@
+# Build output & dependencies
+.next/
+out/
+build/
+node_modules/
+
+# Generated code (Prisma client, etc.)
+lib/generated/
+app/generated/
+
+# Lockfiles & data
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Next.js env types
+next-env.d.ts
+tsconfig.tsbuildinfo

@@ -7,11 +7,7 @@ import { getTopicPageData } from "@/lib/topics-data";
 
 export const dynamic = "force-dynamic";
 
-export default async function TopicPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function TopicPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const data = await getTopicPageData(slug);
 
@@ -26,7 +22,10 @@ export default async function TopicPage({
   return (
     <main className="min-h-screen bg-background px-4 py-8 font-sans text-fp-ink sm:px-8">
       <section className="mx-auto max-w-[1280px]">
-        <Link className="inline-flex items-center gap-2 text-sm font-extrabold text-fp-green" href="/topics">
+        <Link
+          className="inline-flex items-center gap-2 text-sm font-extrabold text-fp-green"
+          href="/topics"
+        >
           <ArrowLeft className="h-4 w-4" />
           All topics
         </Link>
@@ -36,7 +35,9 @@ export default async function TopicPage({
             <div>
               <p className="text-sm font-extrabold uppercase text-fp-green">Topic</p>
               <h1 className="mt-2 text-4xl font-bold leading-tight text-fp-ink">{topic.title}</h1>
-              <p className="mt-3 max-w-2xl text-base font-semibold leading-7 text-fp-muted">{topic.desc}</p>
+              <p className="mt-3 max-w-2xl text-base font-semibold leading-7 text-fp-muted">
+                {topic.desc}
+              </p>
             </div>
             <span className="grid h-16 w-16 shrink-0 place-items-center rounded-md bg-fp-mint text-fp-green">
               <TopicIcon className="h-8 w-8" />
@@ -45,13 +46,27 @@ export default async function TopicPage({
         </div>
 
         {lead ? (
-          <Link className="group mt-5 grid overflow-hidden rounded-lg border border-fp-line bg-fp-ink shadow-card lg:grid-cols-[1.05fr_0.95fr]" href={getArticleHref(lead)}>
+          <Link
+            className="group mt-5 grid overflow-hidden rounded-lg border border-fp-line bg-fp-ink shadow-card lg:grid-cols-[1.05fr_0.95fr]"
+            href={getArticleHref(lead)}
+          >
             <span className="relative min-h-[18rem] lg:min-h-[28rem]">
-              <Image src={lead.image} alt={lead.title} fill className="object-cover opacity-85 transition duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 100vw, 50vw" priority />
+              <Image
+                src={lead.image}
+                alt={lead.title}
+                fill
+                className="object-cover opacity-85 transition duration-500 group-hover:scale-105"
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                priority
+              />
             </span>
             <span className="flex flex-col justify-end p-5 text-white sm:p-8">
-              <span className="w-fit rounded-full bg-white/90 px-3 py-1 text-[10px] font-extrabold uppercase text-fp-green">{lead.tag}</span>
-              <span className="mt-5 block text-3xl font-bold leading-tight sm:text-4xl">{lead.title}</span>
+              <span className="w-fit rounded-full bg-white/90 px-3 py-1 text-[10px] font-extrabold uppercase text-fp-green">
+                {lead.tag}
+              </span>
+              <span className="mt-5 block text-3xl font-bold leading-tight sm:text-4xl">
+                {lead.title}
+              </span>
               <span className="mt-4 flex items-center gap-2 text-sm font-semibold text-white/80">
                 {lead.meta}
                 <span>&middot;</span>
@@ -64,13 +79,25 @@ export default async function TopicPage({
 
         <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {rest.map((post) => (
-            <Link key={post.slug} className="overflow-hidden rounded-lg border border-fp-line bg-white shadow-card transition hover:-translate-y-1 hover:shadow-xl" href={getArticleHref(post)}>
+            <Link
+              key={post.slug}
+              className="overflow-hidden rounded-lg border border-fp-line bg-white shadow-card transition hover:-translate-y-1 hover:shadow-xl"
+              href={getArticleHref(post)}
+            >
               <span className="relative block h-44">
-                <Image src={post.image} alt={post.title} fill className="object-cover" sizes="(max-width: 640px) 100vw, 33vw" />
+                <Image
+                  src={post.image}
+                  alt={post.title}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 640px) 100vw, 33vw"
+                />
               </span>
               <span className="block p-4">
                 <span className="text-xs font-extrabold uppercase text-fp-green">{post.tag}</span>
-                <span className="mt-2 line-clamp-2 block text-lg font-bold leading-tight text-fp-ink">{post.title}</span>
+                <span className="mt-2 line-clamp-2 block text-lg font-bold leading-tight text-fp-ink">
+                  {post.title}
+                </span>
                 <span className="mt-4 flex items-center gap-2 text-xs font-semibold text-fp-muted">
                   {post.meta}
                   <span>&middot;</span>

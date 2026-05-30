@@ -8,7 +8,10 @@ export default function AuthErrorPage() {
         <p className="mt-3 text-sm font-semibold leading-6 text-fp-muted">
           The sign-in link may have expired or the provider could not complete the request.
         </p>
-        <Link className="mt-6 inline-flex rounded-md bg-fp-green px-5 py-3 text-sm font-extrabold !text-white shadow-green" href="/signin">
+        <Link
+          className="mt-6 inline-flex rounded-md bg-fp-green px-5 py-3 text-sm font-extrabold !text-white shadow-green"
+          href="/signin"
+        >
           Try again
         </Link>
       </section>

@@ -108,14 +108,14 @@ export const SETTING_GROUPS: SettingGroup[] = [
         label: "Enabled",
         secret: false,
         placeholder: "true",
-        help: "Set to \"true\" to let the scheduled job run. Any other value (or blank) keeps it off.",
+        help: 'Set to "true" to let the scheduled job run. Any other value (or blank) keeps it off.',
       },
       {
         key: "AI_DRAFTS_PROVIDER",
         label: "Text Provider",
         secret: false,
         placeholder: "anthropic",
-        help: "Which model writes the article: \"anthropic\" or \"deepseek\". Cover images always use OpenAI.",
+        help: 'Which model writes the article: "anthropic" or "deepseek". Cover images always use OpenAI.',
       },
       {
         key: "AI_DRAFTS_INTERVAL_MINUTES",
@@ -138,7 +138,12 @@ export const SETTING_GROUPS: SettingGroup[] = [
         placeholder: "communication",
         help: "Restrict generation to one topic by slug. Leave blank to rotate across all topics.",
       },
-      { key: "ANTHROPIC_API_KEY", label: "Anthropic API Key", secret: true, placeholder: "sk-ant-..." },
+      {
+        key: "ANTHROPIC_API_KEY",
+        label: "Anthropic API Key",
+        secret: true,
+        placeholder: "sk-ant-...",
+      },
       {
         key: "ANTHROPIC_MODEL",
         label: "Anthropic Model",
@@ -159,7 +164,7 @@ export const SETTING_GROUPS: SettingGroup[] = [
         label: "Generate cover images",
         secret: false,
         placeholder: "true",
-        help: "Set to \"true\" to generate a cover image for each draft with OpenAI. Requires an OpenAI key.",
+        help: 'Set to "true" to generate a cover image for each draft with OpenAI. Requires an OpenAI key.',
       },
       { key: "OPENAI_API_KEY", label: "OpenAI API Key", secret: true, placeholder: "sk-..." },
       {
@@ -181,7 +186,7 @@ export const SETTING_GROUPS: SettingGroup[] = [
         key: "CRON_SECRET",
         label: "Cron Secret",
         secret: true,
-        help: "Use \"Generate\" to create a strong secret. The cron endpoint accepts this value or the CRON_SECRET env var.",
+        help: 'Use "Generate" to create a strong secret. The cron endpoint accepts this value or the CRON_SECRET env var.',
       },
     ],
   },

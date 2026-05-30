@@ -8,7 +8,11 @@ export function PopularPosts({ posts }: { posts: PopularPost[] }) {
       <SectionHeader title="Popular Posts" compact />
       <div className="space-y-3">
         {posts.map((post, index) => (
-          <a key={post.title} href={post.href ?? `/posts/${slugify(post.title)}`} className="grid grid-cols-[1.55rem_4.3rem_1fr] items-center gap-3 border-b border-fp-line pb-3 last:border-0 last:pb-0">
+          <a
+            key={post.title}
+            href={post.href ?? `/posts/${slugify(post.title)}`}
+            className="grid grid-cols-[1.55rem_4.3rem_1fr] items-center gap-3 border-b border-fp-line pb-3 last:border-0 last:pb-0"
+          >
             <span className="grid h-6 w-6 place-items-center rounded-full bg-fp-green text-[11px] font-extrabold text-white">
               {index + 1}
             </span>
@@ -16,7 +20,9 @@ export function PopularPosts({ posts }: { posts: PopularPost[] }) {
               <Image src={post.image} alt={post.title} fill className="object-cover" sizes="72px" />
             </span>
             <span className="min-w-0">
-              <span className="line-clamp-2 text-sm font-extrabold leading-tight text-fp-ink">{post.title}</span>
+              <span className="line-clamp-2 text-sm font-extrabold leading-tight text-fp-ink">
+                {post.title}
+              </span>
               <span className="mt-1 block text-[11px] font-semibold text-fp-muted">
                 {post.meta} <span className="mx-1 text-fp-green">&middot;</span> {post.read}
               </span>

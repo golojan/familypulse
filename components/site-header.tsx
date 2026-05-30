@@ -26,7 +26,11 @@ export function SiteHeader() {
             Home
           </a>
           {navItems.map((item) => (
-            <a key={item.label} className={`items-center gap-1 hover:text-fp-green ${item.wideOnly ? "hidden 2xl:inline-flex" : "inline-flex"}`} href={item.href}>
+            <a
+              key={item.label}
+              className={`items-center gap-1 hover:text-fp-green ${item.wideOnly ? "hidden 2xl:inline-flex" : "inline-flex"}`}
+              href={item.href}
+            >
               {item.label} {item.menu ? <ChevronDown className="h-4 w-4" /> : null}
             </a>
           ))}
@@ -34,7 +38,10 @@ export function SiteHeader() {
 
         <div className="flex items-center gap-2 sm:gap-3">
           <label className="hidden h-12 w-[260px] items-center gap-2 rounded-md border border-fp-line bg-white px-4 text-sm font-semibold text-fp-muted shadow-soft 2xl:flex">
-            <input className="w-full bg-transparent outline-none" placeholder="Search articles, podcast..." />
+            <input
+              className="w-full bg-transparent outline-none"
+              placeholder="Search articles, podcast..."
+            />
             <Search className="h-5 w-5 text-fp-green" />
           </label>
           <button className="grid h-11 w-11 place-items-center rounded-md border border-fp-line bg-white text-fp-ink shadow-soft 2xl:hidden">

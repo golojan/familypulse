@@ -55,7 +55,12 @@ export async function getDraftConfig(): Promise<DraftConfig> {
   const provider: AiProvider =
     (s.AI_DRAFTS_PROVIDER ?? "").toLowerCase() === "deepseek" ? "deepseek" : "anthropic";
 
-  const intervalMinutes = clampInt(s.AI_DRAFTS_INTERVAL_MINUTES, DEFAULT_INTERVAL_MINUTES, 1, 60 * 24 * 7);
+  const intervalMinutes = clampInt(
+    s.AI_DRAFTS_INTERVAL_MINUTES,
+    DEFAULT_INTERVAL_MINUTES,
+    1,
+    60 * 24 * 7,
+  );
   const perRun = clampInt(s.AI_DRAFTS_PER_RUN, DEFAULT_PER_RUN, 1, MAX_PER_RUN);
   const topicSlug = s.AI_DRAFTS_TOPIC_SLUG?.trim() || null;
 
@@ -147,9 +152,7 @@ async function pickTopics(topicSlug: string | null, count: number): Promise<Topi
   for (const row of newestByTopic) {
     if (row.topicId) lastUsed.set(row.topicId, row._max.createdAt?.getTime() ?? 0);
   }
-  const ordered = [...topics].sort(
-    (a, b) => (lastUsed.get(a.id) ?? 0) - (lastUsed.get(b.id) ?? 0),
-  );
+  const ordered = [...topics].sort((a, b) => (lastUsed.get(a.id) ?? 0) - (lastUsed.get(b.id) ?? 0));
 
   return Array.from({ length: count }, (_, i) => ordered[i % ordered.length]);
 }
@@ -208,12 +211,22 @@ export async function generateDrafts(
 
 async function runGeneration(config: DraftConfig): Promise<RunResult> {
   if (!config.apiKey) {
-    return { status: "FAILED", created: 0, postIds: [], detail: `Missing API key for ${config.provider}.` };
+    return {
+      status: "FAILED",
+      created: 0,
+      postIds: [],
+      detail: `Missing API key for ${config.provider}.`,
+    };
   }
 
   const authorId = await resolveAuthorId();
   if (!authorId) {
-    return { status: "FAILED", created: 0, postIds: [], detail: "No SUPERADMIN user to author drafts." };
+    return {
+      status: "FAILED",
+      created: 0,
+      postIds: [],
+      detail: "No SUPERADMIN user to author drafts.",
+    };
   }
 
   const topics = await pickTopics(config.topicSlug, config.perRun);
@@ -488,7 +501,10 @@ function coerceGenerated(raw: string): GeneratedPost {
 
 /** Strip markdown fences / surrounding prose and return the JSON object substring. */
 function extractJson(raw: string): string {
-  const trimmed = raw.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+  const trimmed = raw
+    .trim()
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/, "");
   const start = trimmed.indexOf("{");
   const end = trimmed.lastIndexOf("}");
   if (start === -1 || end === -1 || end < start) return trimmed;

@@ -120,7 +120,9 @@ export function parseBlocks(value: unknown): Block[] {
           id,
           type: "list",
           ordered: b.ordered === true,
-          items: Array.isArray(b.items) ? b.items.filter((i): i is string => typeof i === "string") : [],
+          items: Array.isArray(b.items)
+            ? b.items.filter((i): i is string => typeof i === "string")
+            : [],
         });
         break;
       case "image":

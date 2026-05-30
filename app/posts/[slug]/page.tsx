@@ -8,11 +8,7 @@ import { getPostPageData } from "@/lib/topics-data";
 
 export const dynamic = "force-dynamic";
 
-export default async function PostPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const data = await getPostPageData(slug);
 
@@ -25,16 +21,24 @@ export default async function PostPage({
   return (
     <main className="min-h-screen bg-background px-4 py-8 font-sans text-fp-ink sm:px-8">
       <article className="mx-auto max-w-[980px]">
-        <Link className="inline-flex items-center gap-2 text-sm font-extrabold text-fp-green" href={post.topicHref ?? "/topics"}>
+        <Link
+          className="inline-flex items-center gap-2 text-sm font-extrabold text-fp-green"
+          href={post.topicHref ?? "/topics"}
+        >
           <ArrowLeft className="h-4 w-4" />
           {post.topicTitle ?? "Back to topics"}
         </Link>
 
         <header className="mt-6">
-          <Link className="inline-flex rounded-full bg-fp-mint px-3 py-1 text-xs font-extrabold uppercase text-fp-green" href={post.topicHref ?? "/topics"}>
+          <Link
+            className="inline-flex rounded-full bg-fp-mint px-3 py-1 text-xs font-extrabold uppercase text-fp-green"
+            href={post.topicHref ?? "/topics"}
+          >
             {post.topicTitle ?? post.tag}
           </Link>
-          <h1 className="mt-5 text-4xl font-bold leading-tight text-fp-ink sm:text-5xl">{post.title}</h1>
+          <h1 className="mt-5 text-4xl font-bold leading-tight text-fp-ink sm:text-5xl">
+            {post.title}
+          </h1>
           <div className="mt-5 flex flex-wrap items-center gap-2 text-sm font-semibold text-fp-muted">
             <span>{post.meta}</span>
             <span>&middot;</span>
@@ -44,7 +48,14 @@ export default async function PostPage({
         </header>
 
         <div className="relative mt-8 min-h-[22rem] overflow-hidden rounded-lg shadow-card sm:min-h-[34rem]">
-          <Image src={post.image} alt={post.title} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 980px" priority />
+          <Image
+            src={post.image}
+            alt={post.title}
+            fill
+            className="object-cover"
+            sizes="(max-width: 1024px) 100vw, 980px"
+            priority
+          />
         </div>
 
         {post.type === "VIDEO" && post.videoUrl ? (
@@ -69,7 +80,11 @@ export default async function PostPage({
           </div>
         ) : null}
 
-        <PostBody blocks={post.blocks} excerpt={post.excerpt} topicName={post.topicTitle ?? post.tag} />
+        <PostBody
+          blocks={post.blocks}
+          excerpt={post.excerpt}
+          topicName={post.topicTitle ?? post.tag}
+        />
       </article>
 
       {relatedPosts.length > 0 ? (
@@ -77,10 +92,20 @@ export default async function PostPage({
           <h2 className="text-2xl font-bold text-fp-ink">Related in {post.topicTitle}</h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-3">
             {relatedPosts.map((related) => (
-              <Link key={related.slug} className="rounded-lg border border-fp-line bg-white p-4 shadow-card transition hover:-translate-y-1 hover:shadow-xl" href={getArticleHref(related)}>
-                <span className="text-xs font-extrabold uppercase text-fp-green">{related.tag}</span>
-                <span className="mt-2 line-clamp-2 block text-base font-bold leading-tight text-fp-ink">{related.title}</span>
-                <span className="mt-3 block text-xs font-semibold text-fp-muted">{related.read}</span>
+              <Link
+                key={related.slug}
+                className="rounded-lg border border-fp-line bg-white p-4 shadow-card transition hover:-translate-y-1 hover:shadow-xl"
+                href={getArticleHref(related)}
+              >
+                <span className="text-xs font-extrabold uppercase text-fp-green">
+                  {related.tag}
+                </span>
+                <span className="mt-2 line-clamp-2 block text-base font-bold leading-tight text-fp-ink">
+                  {related.title}
+                </span>
+                <span className="mt-3 block text-xs font-semibold text-fp-muted">
+                  {related.read}
+                </span>
               </Link>
             ))}
           </div>
@@ -119,10 +144,12 @@ function PostBody({
     return (
       <div className="mt-8 rounded-lg border border-fp-line bg-white p-5 text-base font-semibold leading-8 text-fp-muted shadow-card sm:p-8">
         <p>
-          {excerpt || `This FamilyPulse article belongs to the ${topicName} topic. It is part of a grouped reading path, so readers can move from this post into related guidance without searching manually.`}
+          {excerpt ||
+            `This FamilyPulse article belongs to the ${topicName} topic. It is part of a grouped reading path, so readers can move from this post into related guidance without searching manually.`}
         </p>
         <p className="mt-5">
-          Use the related posts below to continue through the same topic, or return to the topic page to view the full collection.
+          Use the related posts below to continue through the same topic, or return to the topic
+          page to view the full collection.
         </p>
       </div>
     );
@@ -134,26 +161,43 @@ function PostBody({
         if (block.type === "heading") {
           const HeadingTag = block.level === 3 ? "h3" : "h2";
           return (
-            <HeadingTag key={block.id} className="mt-7 first:mt-0 text-2xl font-bold leading-tight text-fp-ink">
+            <HeadingTag
+              key={block.id}
+              className="mt-7 first:mt-0 text-2xl font-bold leading-tight text-fp-ink"
+            >
               {block.text}
             </HeadingTag>
           );
         }
         if (block.type === "paragraph") {
-          return <p key={block.id} className="mt-5 first:mt-0">{block.text}</p>;
+          return (
+            <p key={block.id} className="mt-5 first:mt-0">
+              {block.text}
+            </p>
+          );
         }
         if (block.type === "quote") {
           return (
-            <blockquote key={block.id} className="mt-6 border-l-4 border-fp-green bg-fp-mint/40 px-5 py-4 text-lg font-bold leading-8 text-fp-ink">
+            <blockquote
+              key={block.id}
+              className="mt-6 border-l-4 border-fp-green bg-fp-mint/40 px-5 py-4 text-lg font-bold leading-8 text-fp-ink"
+            >
               {block.text}
-              {block.cite ? <cite className="mt-3 block text-sm font-semibold text-fp-muted">- {block.cite}</cite> : null}
+              {block.cite ? (
+                <cite className="mt-3 block text-sm font-semibold text-fp-muted">
+                  - {block.cite}
+                </cite>
+              ) : null}
             </blockquote>
           );
         }
         if (block.type === "list") {
           const ListTag = block.ordered ? "ol" : "ul";
           return (
-            <ListTag key={block.id} className={`mt-5 space-y-2 pl-5 ${block.ordered ? "list-decimal" : "list-disc"}`}>
+            <ListTag
+              key={block.id}
+              className={`mt-5 space-y-2 pl-5 ${block.ordered ? "list-decimal" : "list-disc"}`}
+            >
               {block.items.map((item) => (
                 <li key={item}>{item}</li>
               ))}
@@ -164,9 +208,19 @@ function PostBody({
         return (
           <figure key={block.id} className="mt-7">
             <div className="relative min-h-[18rem] overflow-hidden rounded-md">
-              <Image src={block.url} alt={block.alt ?? ""} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 820px" />
+              <Image
+                src={block.url}
+                alt={block.alt ?? ""}
+                fill
+                className="object-cover"
+                sizes="(max-width: 1024px) 100vw, 820px"
+              />
             </div>
-            {block.caption ? <figcaption className="mt-2 text-sm font-semibold text-fp-muted">{block.caption}</figcaption> : null}
+            {block.caption ? (
+              <figcaption className="mt-2 text-sm font-semibold text-fp-muted">
+                {block.caption}
+              </figcaption>
+            ) : null}
           </figure>
         );
       })}

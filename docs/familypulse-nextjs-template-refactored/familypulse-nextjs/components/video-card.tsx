@@ -22,7 +22,9 @@ export function VideoCard({ title, image, duration = "10:36" }: VideoCardProps) 
       <div className="pt-4">
         <p className="mb-2 text-sm font-black text-fp-ink">Videos</p>
         <h3 className="text-base font-black leading-tight text-fp-ink">{title}</h3>
-        <a href="#" className="mt-3 inline-flex text-xs font-black text-fp-green">View all</a>
+        <a href="#" className="mt-3 inline-flex text-xs font-black text-fp-green">
+          View all
+        </a>
       </div>
     </article>
   );

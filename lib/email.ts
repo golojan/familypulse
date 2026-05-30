@@ -16,7 +16,9 @@ export const FALLBACK_FROM = "FamilyPulse <no-reply@familypulse.com>";
 async function getResend(): Promise<Resend> {
   const { RESEND_API_KEY } = await getSettings();
   if (!RESEND_API_KEY) {
-    throw new Error("Resend API key is not configured (set it in Site Settings or RESEND_API_KEY).");
+    throw new Error(
+      "Resend API key is not configured (set it in Site Settings or RESEND_API_KEY).",
+    );
   }
   return new Resend(RESEND_API_KEY);
 }

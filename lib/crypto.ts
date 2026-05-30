@@ -1,10 +1,5 @@
 import "server-only";
-import {
-  createCipheriv,
-  createDecipheriv,
-  createHash,
-  randomBytes,
-} from "node:crypto";
+import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 
 /**
  * Symmetric encryption for secret site settings stored in the database.

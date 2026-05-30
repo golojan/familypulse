@@ -17,7 +17,11 @@ export function TrendingTopics({ topics }: { topics: TrendingTopic[] }) {
         </div>
         <div className="no-scrollbar flex flex-1 gap-2 overflow-x-auto lg:flex-wrap lg:justify-end">
           {topics.map((topic) => (
-            <a key={topic.title} className="whitespace-nowrap rounded-full border border-fp-green/15 bg-fp-mint px-4 py-2 text-xs font-extrabold text-fp-green" href={topic.href}>
+            <a
+              key={topic.title}
+              className="whitespace-nowrap rounded-full border border-fp-green/15 bg-fp-mint px-4 py-2 text-xs font-extrabold text-fp-green"
+              href={topic.href}
+            >
               {topic.title}
             </a>
           ))}

@@ -1,4 +1,10 @@
-import { articles, mediaCards, podcasts, quickTopics, trendingTopics } from "@/lib/familypulse-data";
+import {
+  articles,
+  mediaCards,
+  podcasts,
+  quickTopics,
+  trendingTopics,
+} from "@/lib/familypulse-data";
 import { FeaturedArticles } from "@/components/featured-articles";
 import { HeroSliderCard } from "@/components/hero-slider-card";
 import { MediaGrid } from "@/components/media-grid";

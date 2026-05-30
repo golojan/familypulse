@@ -1,9 +1,15 @@
 # Post Formatting and Guidelines
 
 ## Overview
+
 This document provides guidelines and best practices for formatting posts within the platform. Adhering to these guidelines will ensure that posts are clear, engaging, and accessible to a wide audience.
 
+## Editorjs
+
+When using Editorjs for creating posts, consider the following formatting tips to enhance the readability and visual appeal of your content.
+
 ## Formatting Guidelines
+
 - **Headings**: Use headings to structure your content. Use H1 for the main title, H2 for subheadings, and H3 for further subdivisions. This helps readers navigate the content easily.
 - **Paragraphs**: Keep paragraphs short and focused. Aim for 3-4 sentences per paragraph to maintain reader engagement.
 - **Bullet Points**: Use bullet points or numbered lists to break down complex information into digestible parts. This enhances readability and allows readers to quickly grasp key points.

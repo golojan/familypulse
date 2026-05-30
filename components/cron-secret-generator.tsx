@@ -3,10 +3,7 @@
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Check, Copy, KeyRound, RefreshCw } from "lucide-react";
-import {
-  generateCronSecret,
-  type GenerateSecretState,
-} from "@/app/admin/settings/actions";
+import { generateCronSecret, type GenerateSecretState } from "@/app/admin/settings/actions";
 
 const INITIAL: GenerateSecretState = { ok: false };
 
@@ -26,16 +23,19 @@ export function CronSecretGenerator({ configured }: { configured: boolean }) {
         <h2 className="text-lg font-bold text-fp-ink">Cron Secret</h2>
       </div>
       <p className="mt-1 text-sm font-semibold text-fp-muted">
-        Authorizes the scheduled AI draft job. Generate one here (stored encrypted), then
-        set the same value as <code className="font-mono">CRON_SECRET</code> in your host&apos;s
-        environment variables so Vercel Cron can call the endpoint.
+        Authorizes the scheduled AI draft job. Generate one here (stored encrypted), then set the
+        same value as <code className="font-mono">CRON_SECRET</code> in your host&apos;s environment
+        variables so Vercel Cron can call the endpoint.
         {configured ? " A secret is currently saved." : " No secret is saved yet."}
       </p>
 
       <form action={action} className="mt-4 grid gap-3">
         <GenerateButton hasExisting={configured} />
         {state.error ? (
-          <p className="rounded-md bg-red-50 px-4 py-3 text-sm font-bold text-red-600" aria-live="polite">
+          <p
+            className="rounded-md bg-red-50 px-4 py-3 text-sm font-bold text-red-600"
+            aria-live="polite"
+          >
             {state.error}
           </p>
         ) : null}
@@ -86,7 +86,11 @@ function SecretReveal({ secret }: { secret: string }) {
           onClick={copy}
           className="inline-flex items-center gap-1.5 rounded-md border border-fp-line bg-white px-3 py-2 text-xs font-extrabold text-fp-ink hover:bg-fp-mint"
         >
-          {copied ? <Check className="h-3.5 w-3.5 text-fp-green" /> : <Copy className="h-3.5 w-3.5" />}
+          {copied ? (
+            <Check className="h-3.5 w-3.5 text-fp-green" />
+          ) : (
+            <Copy className="h-3.5 w-3.5" />
+          )}
           {copied ? "Copied" : "Copy"}
         </button>
       </div>

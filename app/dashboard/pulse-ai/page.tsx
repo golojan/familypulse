@@ -50,25 +50,29 @@ export default async function PulseAiPage() {
           <p className="mt-3 text-sm font-semibold leading-6 text-fp-muted">
             On a schedule, Pulse AI writes new article drafts with{" "}
             {config.provider === "deepseek" ? "DeepSeek" : "Anthropic"} and saves them as
-            <span className="font-extrabold"> drafts</span> for an editor to review and
-            publish. Nothing is published automatically.
+            <span className="font-extrabold"> drafts</span> for an editor to review and publish.
+            Nothing is published automatically.
           </p>
 
           <dl className="mt-6 grid gap-3 sm:grid-cols-2">
-            <ConfigRow label="Schedule" ok={config.enabled} value={config.enabled ? "Enabled" : "Disabled"} />
+            <ConfigRow
+              label="Schedule"
+              ok={config.enabled}
+              value={config.enabled ? "Enabled" : "Disabled"}
+            />
             <ConfigRow
               label="API key"
               ok={hasKey}
               value={hasKey ? `${config.provider} configured` : `No ${config.provider} key`}
             />
             <ConfigRow label="Interval" ok value={`Every ${config.intervalMinutes} min`} />
-            <ConfigRow label="Per run" ok value={`${config.perRun} draft${config.perRun === 1 ? "" : "s"}`} />
-            <ConfigRow label="Model" ok value={config.model} />
             <ConfigRow
-              label="Topic"
+              label="Per run"
               ok
-              value={config.topicSlug ?? "Rotating across all topics"}
+              value={`${config.perRun} draft${config.perRun === 1 ? "" : "s"}`}
             />
+            <ConfigRow label="Model" ok value={config.model} />
+            <ConfigRow label="Topic" ok value={config.topicSlug ?? "Rotating across all topics"} />
             <ConfigRow
               label="Cover images"
               ok={!config.coverImages || Boolean(config.openaiApiKey)}
@@ -164,7 +168,9 @@ function RunBadge({ status }: { status: string }) {
     FAILED: "bg-red-100 text-red-600",
   };
   return (
-    <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-extrabold ${map[status] ?? "bg-fp-line/60 text-fp-muted"}`}>
+    <span
+      className={`rounded-full px-2.5 py-0.5 text-[11px] font-extrabold ${map[status] ?? "bg-fp-line/60 text-fp-muted"}`}
+    >
       {status}
     </span>
   );

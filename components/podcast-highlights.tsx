@@ -8,12 +8,20 @@ export function PodcastHighlights({ episodes }: { episodes: PodcastEpisode[] }) 
       <SectionHeader title="Podcast Highlights" compact />
       <div className="space-y-3">
         {episodes.map((podcast) => (
-          <a key={podcast.title} href="#" className="flex items-center gap-3 rounded-md border border-fp-line p-3">
+          <a
+            key={podcast.title}
+            href="#"
+            className="flex items-center gap-3 rounded-md border border-fp-line p-3"
+          >
             <span className="grid h-9 w-9 place-items-center rounded-full bg-fp-mint text-fp-green">
               <Play className="ml-0.5 h-4 w-4" fill="currentColor" />
             </span>
-            <span className="min-w-0 flex-1 truncate text-sm font-extrabold text-fp-ink">{podcast.title}</span>
-            <span className="rounded-full bg-fp-mint px-2.5 py-1 text-xs font-extrabold text-fp-green">{podcast.time}</span>
+            <span className="min-w-0 flex-1 truncate text-sm font-extrabold text-fp-ink">
+              {podcast.title}
+            </span>
+            <span className="rounded-full bg-fp-mint px-2.5 py-1 text-xs font-extrabold text-fp-green">
+              {podcast.time}
+            </span>
           </a>
         ))}
       </div>

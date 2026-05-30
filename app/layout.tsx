@@ -5,7 +5,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "FamilyPulse - Healthy Families. Stronger Together.",
-  description: "Family education blog and podcast for couples, parenting, relationships, discipline and work-life balance.",
+  description:
+    "Family education blog and podcast for couples, parenting, relationships, discipline and work-life balance.",
 };
 
 const nunito = Nunito({

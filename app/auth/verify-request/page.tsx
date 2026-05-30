@@ -12,7 +12,10 @@ export default function VerifyRequestPage() {
         <p className="mt-3 text-sm font-semibold leading-6 text-fp-muted">
           We sent a secure sign-in link. Open it from the same browser to finish signing in.
         </p>
-        <Link className="mt-6 inline-flex rounded-md border border-fp-line bg-white px-5 py-3 text-sm font-extrabold text-fp-ink shadow-soft" href="/">
+        <Link
+          className="mt-6 inline-flex rounded-md border border-fp-line bg-white px-5 py-3 text-sm font-extrabold text-fp-ink shadow-soft"
+          href="/"
+        >
           Back home
         </Link>
       </section>

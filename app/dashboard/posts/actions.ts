@@ -140,8 +140,7 @@ export async function savePost(
         topicId,
         status: mode === "publish" ? "PUBLISHED" : "DRAFT",
         // Stamp publishedAt the first time it goes live; keep the original date afterwards.
-        publishedAt:
-          mode === "publish" ? (owned.publishedAt ?? new Date()) : owned.publishedAt,
+        publishedAt: mode === "publish" ? (owned.publishedAt ?? new Date()) : owned.publishedAt,
       },
     });
   } else {

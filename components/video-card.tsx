@@ -9,7 +9,10 @@ type VideoCardProps = {
 
 export function VideoCard({ title, image, duration = "10:36" }: VideoCardProps) {
   return (
-    <article data-clickable="true" className="overflow-hidden rounded-md border border-fp-line bg-white p-3 shadow-card">
+    <article
+      data-clickable="true"
+      className="overflow-hidden rounded-md border border-fp-line bg-white p-3 shadow-card"
+    >
       <div className="relative h-36 overflow-hidden rounded-sm">
         <Image src={image} alt={title} fill className="object-cover" />
         <button className="absolute left-1/2 top-1/2 grid h-12 w-12 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white/95 text-fp-green shadow-md">
@@ -22,7 +25,9 @@ export function VideoCard({ title, image, duration = "10:36" }: VideoCardProps) 
       <div className="pt-4">
         <p className="mb-2 text-sm font-extrabold text-fp-ink">Videos</p>
         <h3 className="text-base font-extrabold leading-tight text-fp-ink">{title}</h3>
-        <a href="#" className="mt-3 inline-flex text-xs font-extrabold text-fp-green">View all</a>
+        <a href="#" className="mt-3 inline-flex text-xs font-extrabold text-fp-green">
+          View all
+        </a>
       </div>
     </article>
   );

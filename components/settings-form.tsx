@@ -23,18 +23,27 @@ export function SettingsForm({ status }: SettingsFormProps) {
   return (
     <form action={action} className="grid gap-6">
       {state.error ? (
-        <p className="rounded-md bg-red-50 px-4 py-3 text-sm font-bold text-red-600" aria-live="polite">
+        <p
+          className="rounded-md bg-red-50 px-4 py-3 text-sm font-bold text-red-600"
+          aria-live="polite"
+        >
           {state.error}
         </p>
       ) : null}
       {state.ok ? (
-        <p className="rounded-md bg-fp-green/10 px-4 py-3 text-sm font-bold text-fp-green" aria-live="polite">
+        <p
+          className="rounded-md bg-fp-green/10 px-4 py-3 text-sm font-bold text-fp-green"
+          aria-live="polite"
+        >
           Settings saved.
         </p>
       ) : null}
 
       {SETTING_GROUPS.filter((group) => group.id !== "cron").map((group) => (
-        <section key={group.id} className="rounded-lg border border-fp-line bg-white p-5 shadow-card sm:p-6">
+        <section
+          key={group.id}
+          className="rounded-lg border border-fp-line bg-white p-5 shadow-card sm:p-6"
+        >
           <h2 className="text-lg font-bold text-fp-ink">{group.title}</h2>
           <p className="mt-1 text-sm font-semibold text-fp-muted">{group.description}</p>
 
@@ -79,7 +88,11 @@ function Field({ field, status }: { field: SettingField; status: SettingStatus }
 
       {field.secret && status.fromDatabase ? (
         <label className="flex items-center gap-2 text-xs font-bold text-fp-muted">
-          <input type="checkbox" name={`clear:${field.key}`} className="h-3.5 w-3.5 accent-red-600" />
+          <input
+            type="checkbox"
+            name={`clear:${field.key}`}
+            className="h-3.5 w-3.5 accent-red-600"
+          />
           Remove stored value
         </label>
       ) : null}

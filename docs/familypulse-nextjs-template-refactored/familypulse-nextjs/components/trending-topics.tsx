@@ -12,7 +12,11 @@ export function TrendingTopics({ topics }: { topics: string[] }) {
         </div>
         <div className="no-scrollbar flex flex-1 gap-2 overflow-x-auto lg:flex-wrap lg:justify-end">
           {topics.map((tag) => (
-            <a key={tag} className="whitespace-nowrap rounded-full border border-fp-green/15 bg-fp-mint px-4 py-2 text-xs font-black text-fp-green" href="#">
+            <a
+              key={tag}
+              className="whitespace-nowrap rounded-full border border-fp-green/15 bg-fp-mint px-4 py-2 text-xs font-black text-fp-green"
+              href="#"
+            >
               {tag}
             </a>
           ))}

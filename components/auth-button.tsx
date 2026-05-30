@@ -10,14 +10,25 @@ export async function AuthButton() {
 
   if (!session?.user) {
     return (
-      <Link className="hidden items-center gap-2 rounded-md bg-fp-green px-5 py-3 text-sm font-extrabold !text-white shadow-green sm:inline-flex" href="/signin">
+      <Link
+        className="hidden items-center gap-2 rounded-md bg-fp-green px-5 py-3 text-sm font-extrabold !text-white shadow-green sm:inline-flex"
+        href="/signin"
+      >
         <LogIn className="h-4 w-4" />
         Sign in
       </Link>
     );
   }
 
-  const canManagePosts = session.user.roles?.some((role) => CAN_MANAGE_POSTS.includes(role)) ?? false;
+  const canManagePosts =
+    session.user.roles?.some((role) => CAN_MANAGE_POSTS.includes(role)) ?? false;
 
-  return <UserAccountMenu canManagePosts={canManagePosts} email={session.user.email} image={session.user.image} name={session.user.name} />;
+  return (
+    <UserAccountMenu
+      canManagePosts={canManagePosts}
+      email={session.user.email}
+      image={session.user.image}
+      name={session.user.name}
+    />
+  );
 }

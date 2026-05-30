@@ -36,7 +36,9 @@ export default async function ProfilePage() {
             )}
           </span>
           <div className="min-w-0">
-            <h1 className="truncate text-2xl font-bold text-fp-ink">{session.user.name ?? "FamilyPulse user"}</h1>
+            <h1 className="truncate text-2xl font-bold text-fp-ink">
+              {session.user.name ?? "FamilyPulse user"}
+            </h1>
             {session.user.email ? (
               <p className="mt-1 flex items-center gap-2 text-sm font-semibold text-fp-muted">
                 <Mail className="h-4 w-4 text-fp-green" />
@@ -53,14 +55,20 @@ export default async function ProfilePage() {
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {roles.map((role) => (
-              <span key={role} className="rounded-full bg-white px-3 py-1 text-xs font-extrabold text-fp-green shadow-soft">
+              <span
+                key={role}
+                className="rounded-full bg-white px-3 py-1 text-xs font-extrabold text-fp-green shadow-soft"
+              >
                 {role}
               </span>
             ))}
           </div>
         </div>
 
-        <Link className="mt-6 inline-flex rounded-md bg-fp-green px-5 py-3 text-sm font-extrabold !text-white shadow-green" href="/dashboard">
+        <Link
+          className="mt-6 inline-flex rounded-md bg-fp-green px-5 py-3 text-sm font-extrabold !text-white shadow-green"
+          href="/dashboard"
+        >
           Go to dashboard
         </Link>
       </section>

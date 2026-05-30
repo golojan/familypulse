@@ -5,11 +5,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { encryptSecret, hasEncryptionKey } from "@/lib/crypto";
-import {
-  SETTING_FIELDS,
-  SETTINGS_CACHE_TAG,
-  type SettingKey,
-} from "@/lib/settings";
+import { SETTING_FIELDS, SETTINGS_CACHE_TAG, type SettingKey } from "@/lib/settings";
 
 export type SettingsActionState = {
   ok: boolean;
@@ -107,7 +103,10 @@ export async function generateCronSecret(
 ): Promise<GenerateSecretState> {
   await requireSuperadmin();
   if (!hasEncryptionKey()) {
-    return { ok: false, error: "SETTINGS_ENCRYPTION_KEY is not set — cannot store the secret securely." };
+    return {
+      ok: false,
+      error: "SETTINGS_ENCRYPTION_KEY is not set — cannot store the secret securely.",
+    };
   }
 
   const secret = randomBytes(32).toString("base64url");

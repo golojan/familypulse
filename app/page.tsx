@@ -1,4 +1,11 @@
-import { articles, mediaCards, podcasts, popularPosts, quickTopics, trendingTopics } from "@/lib/familypulse-data";
+import {
+  articles,
+  mediaCards,
+  podcasts,
+  popularPosts,
+  quickTopics,
+  trendingTopics,
+} from "@/lib/familypulse-data";
 import { listTopicSectionsForLanding } from "@/lib/topics-data";
 import { CategoryBlogSections } from "@/components/category-blog-sections";
 import { FeaturedArticles } from "@/components/featured-articles";

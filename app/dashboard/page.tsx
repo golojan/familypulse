@@ -25,8 +25,8 @@ export default async function DashboardPage() {
         <div className="mx-auto max-w-lg rounded-lg border border-fp-line bg-white p-8 text-center shadow-card">
           <h1 className="text-2xl font-bold">No editor access</h1>
           <p className="mt-3 text-sm font-semibold leading-6 text-fp-muted">
-            Your account doesn&apos;t have permission to manage posts. Ask a
-            FamilyPulse administrator for editor access.
+            Your account doesn&apos;t have permission to manage posts. Ask a FamilyPulse
+            administrator for editor access.
           </p>
           <Link
             href="/"

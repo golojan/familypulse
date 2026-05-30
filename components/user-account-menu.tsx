@@ -13,12 +13,7 @@ type UserAccountMenuProps = {
   canManagePosts: boolean;
 };
 
-export function UserAccountMenu({
-  name,
-  email,
-  image,
-  canManagePosts,
-}: UserAccountMenuProps) {
+export function UserAccountMenu({ name, email, image, canManagePosts }: UserAccountMenuProps) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const initials = getInitials(name ?? email ?? "Account");
@@ -67,7 +62,9 @@ export function UserAccountMenu({
               initials
             )}
           </span>
-          <ChevronDown className={`hidden h-4 w-4 text-fp-muted transition sm:block ${open ? "rotate-180" : ""}`} />
+          <ChevronDown
+            className={`hidden h-4 w-4 text-fp-muted transition sm:block ${open ? "rotate-180" : ""}`}
+          />
         </button>
 
         {open ? (
@@ -76,8 +73,12 @@ export function UserAccountMenu({
             className="absolute right-0 top-[calc(100%+0.6rem)] z-50 w-64 overflow-hidden rounded-lg border border-fp-line bg-white shadow-card"
           >
             <div className="border-b border-fp-line px-4 py-3">
-              <p className="truncate text-sm font-extrabold text-fp-ink">{name ?? "FamilyPulse user"}</p>
-              {email ? <p className="mt-0.5 truncate text-xs font-semibold text-fp-muted">{email}</p> : null}
+              <p className="truncate text-sm font-extrabold text-fp-ink">
+                {name ?? "FamilyPulse user"}
+              </p>
+              {email ? (
+                <p className="mt-0.5 truncate text-xs font-semibold text-fp-muted">{email}</p>
+              ) : null}
             </div>
 
             <Link
