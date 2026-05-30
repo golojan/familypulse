@@ -9,19 +9,18 @@ import {
   Heading,
   Image as ImageIcon,
   List,
-  Mic2,
   Plus,
   Quote,
   Save,
   Send,
   Text,
   Trash2,
-  Video,
 } from "lucide-react";
 import { BLOCK_LABELS, createBlock, type Block, type BlockType } from "@/lib/posts";
 import type { TopicOption } from "@/lib/topics-data";
 import { savePost, type ActionState } from "@/app/dashboard/posts/actions";
 import { MediaUploadField } from "./media-upload-field";
+import { VideoEditor } from "./video-editor";
 
 const INITIAL: ActionState = { ok: false };
 
@@ -38,8 +37,8 @@ type PostEditorProps = {
   initialTitle?: string;
   initialType?: "ARTICLE" | "VIDEO" | "PODCAST";
   initialCover?: string;
+  initialExcerpt?: string;
   initialVideoUrl?: string;
-  initialAudioUrl?: string;
   initialTopicId?: string | null;
   initialBlocks?: Block[];
   status?: "DRAFT" | "PUBLISHED";
@@ -51,8 +50,8 @@ export function PostEditor({
   initialTitle = "",
   initialType = "ARTICLE",
   initialCover = "",
+  initialExcerpt = "",
   initialVideoUrl = "",
-  initialAudioUrl = "",
   initialTopicId = "",
   initialBlocks = [],
   status = "DRAFT",
@@ -61,10 +60,8 @@ export function PostEditor({
   const [title, setTitle] = useState(initialTitle);
   const [postType, setPostType] = useState<"ARTICLE" | "VIDEO" | "PODCAST">(initialType);
   const [cover, setCover] = useState(initialCover);
+  const [description, setDescription] = useState(initialExcerpt);
   const [videoUrl, setVideoUrl] = useState(initialVideoUrl);
-  const [audioUrl, setAudioUrl] = useState(initialAudioUrl);
-  const [coverGenerating, setCoverGenerating] = useState(false);
-  const [coverGenerationError, setCoverGenerationError] = useState("");
   const [topicId, setTopicId] = useState(initialTopicId ?? "");
   const [blocks, setBlocks] = useState<Block[]>(
     initialBlocks.length ? initialBlocks : [createBlock("paragraph")],
@@ -103,24 +100,9 @@ export function PostEditor({
     });
   }
 
-  async function generateCoverFromVideo() {
-    if (!videoUrl || isPublished) return;
-    setCoverGenerating(true);
-    setCoverGenerationError("");
-
-    try {
-      const blob = await captureVideoFrame(videoUrl);
-      const uploadedUrl = await uploadGeneratedCover(blob);
-      setCover(uploadedUrl);
-    } catch (error) {
-      setCoverGenerationError(
-        error instanceof Error ? error.message : "Could not generate a cover from this video.",
-      );
-    } finally {
-      setCoverGenerating(false);
-    }
-  }
-
+  // Both Video and Podcast posts use the same video-based flow (YouTube/upload
+  // + player + cover) — podcasts are published as video, not audio.
+  const usesVideoFlow = postType === "VIDEO" || postType === "PODCAST";
   const serializedBlocks = JSON.stringify(blocks);
 
   return (
@@ -137,7 +119,7 @@ export function PostEditor({
         <div className="flex gap-2">
           <form action={draftAction}>
             <HiddenFields
-              audioUrl={audioUrl}
+              description={description}
               blocks={serializedBlocks}
               cover={cover}
               postType={postType}
@@ -155,7 +137,7 @@ export function PostEditor({
           </form>
           <form action={publishAction}>
             <HiddenFields
-              audioUrl={audioUrl}
+              description={description}
               blocks={serializedBlocks}
               cover={cover}
               postType={postType}
@@ -191,6 +173,28 @@ export function PostEditor({
             </select>
           </label>
 
+          <label className="mb-4 grid gap-2 text-sm font-extrabold text-fp-ink">
+            Topic
+            <select
+              className="w-full rounded-md border border-fp-line bg-white px-4 py-2.5 text-sm font-semibold text-fp-ink outline-none focus:ring-4 focus:ring-fp-green/15"
+              value={topicId}
+              disabled={isPublished}
+              onChange={(e) => setTopicId(e.target.value)}
+            >
+              <option value="">Select a topic</option>
+              {topics.map((topic) => (
+                <option key={topic.id} value={topic.id}>
+                  {topic.title}
+                </option>
+              ))}
+            </select>
+          </label>
+          {topicError ? (
+            <p className="mb-2 text-sm font-bold text-red-600" aria-live="polite">
+              {topicError}
+            </p>
+          ) : null}
+
           <label className="grid gap-2 text-sm font-extrabold text-fp-ink">
             Post title
             <input
@@ -208,154 +212,86 @@ export function PostEditor({
           ) : null}
 
           <label className="mt-4 grid gap-2 text-sm font-extrabold text-fp-ink">
-            Topic
-            <select
-              className="w-full rounded-md border border-fp-line bg-white px-4 py-2.5 text-sm font-semibold text-fp-ink outline-none focus:ring-4 focus:ring-fp-green/15"
-              value={topicId}
+            SEO description
+            <textarea
+              className="min-h-20 w-full resize-y rounded-md border border-fp-line bg-white px-4 py-2.5 text-sm font-semibold leading-6 text-fp-ink outline-none focus:ring-4 focus:ring-fp-green/15"
+              value={description}
               disabled={isPublished}
-              onChange={(e) => setTopicId(e.target.value)}
-            >
-              <option value="">Select a topic</option>
-              {topics.map((topic) => (
-                <option key={topic.id} value={topic.id}>
-                  {topic.title}
-                </option>
+              maxLength={300}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="A short summary for search engines and previews (recommended ~150–160 characters)."
+            />
+            <span className="text-xs font-semibold text-fp-muted">
+              {description.length}/300 · Used as the meta description and post excerpt. Leave blank
+              to auto-generate from the content.
+            </span>
+          </label>
+        </div>
+
+        {usesVideoFlow ? (
+          // Video posts replace the block editor with the video panel: a
+          // drop/URL zone that swaps to a player preview once a video loads.
+          <VideoEditor
+            videoUrl={videoUrl}
+            cover={cover}
+            locked={isPublished}
+            onVideoChange={setVideoUrl}
+            onCoverChange={setCover}
+          />
+        ) : (
+          <>
+            {/* Block list */}
+            <div className="mt-5 grid gap-3">
+              {blocks.map((block, index) => (
+                <BlockCard
+                  key={block.id}
+                  block={block}
+                  index={index}
+                  total={blocks.length}
+                  locked={isPublished}
+                  onChange={(patch) => update(block.id, patch)}
+                  onRemove={() => remove(block.id)}
+                  onMove={(dir) => move(index, dir)}
+                />
               ))}
-            </select>
-          </label>
-          {topicError ? (
-            <p className="mt-2 text-sm font-bold text-red-600" aria-live="polite">
-              {topicError}
-            </p>
-          ) : null}
+            </div>
 
-          <label className="hidden">
-            Cover image URL <span className="font-semibold text-fp-muted">(optional)</span>
-            <input
-              className="w-full rounded-md border border-fp-line bg-white px-4 py-2.5 text-sm font-semibold text-fp-ink outline-none focus:ring-4 focus:ring-fp-green/15"
-              value={cover}
-              onChange={(e) => setCover(e.target.value)}
-              placeholder="https://…"
-            />
-          </label>
-        </div>
-
-        {/* Block list */}
-        <div className="mt-5 grid gap-3">
-          {blocks.map((block, index) => (
-            <BlockCard
-              key={block.id}
-              block={block}
-              index={index}
-              total={blocks.length}
-              locked={isPublished}
-              onChange={(patch) => update(block.id, patch)}
-              onRemove={() => remove(block.id)}
-              onMove={(dir) => move(index, dir)}
-            />
-          ))}
-        </div>
-
-        {isPublished ? null : <BlockAdder onAdd={add} />}
+            {isPublished ? null : <BlockAdder onAdd={add} />}
+          </>
+        )}
       </div>
 
       {/* Sidebar: media + submit actions. Two forms so each button posts its own mode. */}
       <aside className="lg:sticky lg:top-6 lg:self-start">
         <div className="grid gap-4">
-          <div className="rounded-lg border border-fp-line bg-white p-5 shadow-card">
-            <p className="text-sm font-extrabold text-fp-ink">Cover photo</p>
-            <p className="mt-1 text-xs font-semibold leading-5 text-fp-muted">
-              Upload or drop an image to use as the post cover.
-            </p>
-            {cover ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={cover}
-                alt=""
-                className="mt-3 aspect-video w-full rounded-md border border-fp-line object-cover"
-              />
-            ) : null}
-            {isPublished ? null : (
-              <div className="mt-3">
-                <MediaUploadField
-                  accept="image/*"
-                  kind="IMAGE"
-                  label="Drop or upload cover"
-                  onUploaded={setCover}
-                />
-              </div>
-            )}
-          </div>
-
-          {postType === "VIDEO" ? (
+          {/* Cover photo: hidden for video/podcast posts — their cover is
+              generated from the video in the main editor column. */}
+          {usesVideoFlow ? null : (
             <div className="rounded-lg border border-fp-line bg-white p-5 shadow-card">
-              <p className="flex items-center gap-2 text-sm font-extrabold text-fp-ink">
-                <Video className="h-4 w-4 text-fp-green" />
-                Video source
+              <p className="text-sm font-extrabold text-fp-ink">Cover photo</p>
+              <p className="mt-1 text-xs font-semibold leading-5 text-fp-muted">
+                Upload or drop an image to use as the post cover.
               </p>
-              <label className="mt-3 grid gap-2 text-xs font-extrabold uppercase text-fp-muted">
-                YouTube or uploaded video URL
-                <input
-                  className="w-full rounded-md border border-fp-line bg-white px-3 py-2 text-sm font-semibold normal-case text-fp-ink outline-none focus:ring-4 focus:ring-fp-green/15"
-                  value={videoUrl}
-                  disabled={isPublished}
-                  onChange={(event) => setVideoUrl(event.target.value)}
-                  placeholder="https://youtube.com/..."
+              {cover ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={cover}
+                  alt=""
+                  className="mt-3 aspect-video w-full rounded-md border border-fp-line object-cover"
                 />
-              </label>
-              {isPublished ? null : (
-                <div className="mt-3 grid gap-3">
-                  <MediaUploadField
-                    accept="video/*"
-                    kind="VIDEO"
-                    label="Drop or upload video"
-                    onUploaded={setVideoUrl}
-                  />
-                  <button
-                    type="button"
-                    onClick={generateCoverFromVideo}
-                    disabled={!videoUrl || coverGenerating}
-                    className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-fp-line bg-white px-3 text-sm font-extrabold text-fp-ink shadow-soft hover:border-fp-green hover:text-fp-green disabled:opacity-50"
-                  >
-                    <ImageIcon className="h-4 w-4" />
-                    {coverGenerating ? "Generating cover..." : "Generate cover from video"}
-                  </button>
-                  {coverGenerationError ? (
-                    <p className="text-xs font-bold text-red-600">{coverGenerationError}</p>
-                  ) : null}
-                </div>
-              )}
-            </div>
-          ) : null}
-
-          {postType === "PODCAST" ? (
-            <div className="rounded-lg border border-fp-line bg-white p-5 shadow-card">
-              <p className="flex items-center gap-2 text-sm font-extrabold text-fp-ink">
-                <Mic2 className="h-4 w-4 text-fp-green" />
-                Podcast audio
-              </p>
-              <label className="mt-3 grid gap-2 text-xs font-extrabold uppercase text-fp-muted">
-                Audio URL
-                <input
-                  className="w-full rounded-md border border-fp-line bg-white px-3 py-2 text-sm font-semibold normal-case text-fp-ink outline-none focus:ring-4 focus:ring-fp-green/15"
-                  value={audioUrl}
-                  disabled={isPublished}
-                  onChange={(event) => setAudioUrl(event.target.value)}
-                  placeholder="https://..."
-                />
-              </label>
+              ) : null}
               {isPublished ? null : (
                 <div className="mt-3">
                   <MediaUploadField
-                    accept="audio/*"
-                    kind="AUDIO"
-                    label="Drop or upload audio"
-                    onUploaded={setAudioUrl}
+                    accept="image/*"
+                    kind="IMAGE"
+                    label="Drop or upload cover"
+                    onUploaded={setCover}
                   />
                 </div>
               )}
             </div>
-          ) : null}
+          )}
 
           <div className="rounded-lg border border-fp-line bg-white p-5 shadow-card">
             <div className="flex items-center justify-between">
@@ -381,7 +317,7 @@ export function PostEditor({
             >
               <form action={draftAction}>
                 <HiddenFields
-                  audioUrl={audioUrl}
+                  description={description}
                   blocks={serializedBlocks}
                   cover={cover}
                   postType={postType}
@@ -399,7 +335,7 @@ export function PostEditor({
 
               <form action={publishAction}>
                 <HiddenFields
-                  audioUrl={audioUrl}
+                  description={description}
                   blocks={serializedBlocks}
                   cover={cover}
                   postType={postType}
@@ -424,142 +360,32 @@ export function PostEditor({
 
 function HiddenFields({
   title,
+  description,
   cover,
   topicId,
   postType,
   videoUrl,
-  audioUrl,
   blocks,
 }: {
   title: string;
+  description: string;
   cover: string;
   topicId: string;
   postType: "ARTICLE" | "VIDEO" | "PODCAST";
   videoUrl: string;
-  audioUrl: string;
   blocks: string;
 }) {
   return (
     <>
       <input type="hidden" name="title" value={title} />
+      <input type="hidden" name="excerpt" value={description} />
       <input type="hidden" name="coverImage" value={cover} />
       <input type="hidden" name="topicId" value={topicId} />
       <input type="hidden" name="type" value={postType} />
       <input type="hidden" name="videoUrl" value={videoUrl} />
-      <input type="hidden" name="audioUrl" value={audioUrl} />
       <input type="hidden" name="blocks" value={blocks} />
     </>
   );
-}
-
-type GeneratedCoverPresignResponse = {
-  uploadUrl: string;
-  contentType: string;
-  media: {
-    id: string;
-    url: string;
-  };
-  error?: string;
-};
-
-function captureVideoFrame(source: string): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    const video = document.createElement("video");
-    let settled = false;
-    const timeout = window.setTimeout(() => {
-      finish(new Error("Could not read a frame from this video."));
-    }, 15000);
-
-    function finish(error?: Error, blob?: Blob) {
-      if (settled) return;
-      settled = true;
-      window.clearTimeout(timeout);
-      video.removeAttribute("src");
-      video.load();
-
-      if (error) {
-        reject(error);
-        return;
-      }
-      if (blob) resolve(blob);
-    }
-
-    video.crossOrigin = "anonymous";
-    video.muted = true;
-    video.playsInline = true;
-    video.preload = "metadata";
-
-    video.addEventListener("error", () => {
-      finish(new Error("Use an uploaded direct video URL to generate a cover."));
-    });
-
-    video.addEventListener("loadedmetadata", () => {
-      video.currentTime = Number.isFinite(video.duration)
-        ? Math.min(1, Math.max(0, video.duration / 5))
-        : 0;
-    });
-
-    video.addEventListener("seeked", () => {
-      try {
-        const canvas = document.createElement("canvas");
-        canvas.width = video.videoWidth || 1280;
-        canvas.height = video.videoHeight || 720;
-        const context = canvas.getContext("2d");
-        if (!context) {
-          finish(new Error("Could not create a cover image."));
-          return;
-        }
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob(
-          (blob) => {
-            if (!blob) {
-              finish(new Error("Could not create a cover image."));
-              return;
-            }
-            finish(undefined, blob);
-          },
-          "image/jpeg",
-          0.86,
-        );
-      } catch {
-        finish(new Error("This video does not allow browser frame capture."));
-      }
-    });
-
-    video.src = source;
-    video.load();
-  });
-}
-
-async function uploadGeneratedCover(blob: Blob) {
-  const presign = await fetch("/api/media/presign", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      filename: `video-cover-${Date.now()}.jpg`,
-      contentType: "image/jpeg",
-      size: blob.size,
-      kind: "IMAGE",
-    }),
-  });
-  const signed = (await presign.json()) as GeneratedCoverPresignResponse;
-
-  if (!presign.ok) {
-    throw new Error(signed.error ?? "Could not prepare cover upload.");
-  }
-
-  const uploadResponse = await fetch(signed.uploadUrl, {
-    method: "PUT",
-    headers: { "Content-Type": signed.contentType },
-    body: blob,
-  });
-
-  if (!uploadResponse.ok) {
-    throw new Error("Cover upload failed.");
-  }
-
-  await fetch(`/api/media/${signed.media.id}/complete`, { method: "POST" });
-  return signed.media.url;
 }
 
 function SubmitButton({

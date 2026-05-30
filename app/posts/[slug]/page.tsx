@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { getArticleHref } from "@/lib/familypulse-data";
 import { type Block } from "@/lib/posts";
 import { getPostPageData } from "@/lib/topics-data";
+import { isYouTubeUrl, youTubeEmbedUrl, youTubeId } from "@/lib/video";
 
 export const dynamic = "force-dynamic";
 
@@ -58,25 +59,20 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
           />
         </div>
 
-        {post.type === "VIDEO" && post.videoUrl ? (
+        {/* Video and Podcast posts both display a video player. */}
+        {(post.type === "VIDEO" || post.type === "PODCAST") && post.videoUrl ? (
           <div className="mt-6 overflow-hidden rounded-lg border border-fp-line bg-white p-3 shadow-card">
-            {isYouTubeUrl(post.videoUrl) ? (
+            {isYouTubeUrl(post.videoUrl) && youTubeId(post.videoUrl) ? (
               <iframe
                 className="aspect-video w-full rounded-md"
-                src={toYouTubeEmbed(post.videoUrl)}
+                src={youTubeEmbedUrl(youTubeId(post.videoUrl) as string)}
                 title={post.title}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
               />
             ) : (
-              <video className="w-full rounded-md" src={post.videoUrl} controls />
+              <video className="aspect-video w-full rounded-md" src={post.videoUrl} controls />
             )}
-          </div>
-        ) : null}
-
-        {post.type === "PODCAST" && post.audioUrl ? (
-          <div className="mt-6 rounded-lg border border-fp-line bg-white p-5 shadow-card">
-            <audio className="w-full" src={post.audioUrl} controls />
           </div>
         ) : null}
 
@@ -113,22 +109,6 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
       ) : null}
     </main>
   );
-}
-
-function isYouTubeUrl(url: string) {
-  return /(?:youtube\.com|youtu\.be)/i.test(url);
-}
-
-function toYouTubeEmbed(url: string) {
-  try {
-    const parsed = new URL(url);
-    const videoId = parsed.hostname.includes("youtu.be")
-      ? parsed.pathname.replace("/", "")
-      : parsed.searchParams.get("v");
-    return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
-  } catch {
-    return url;
-  }
 }
 
 function PostBody({

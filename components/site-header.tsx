@@ -4,7 +4,6 @@ import { Logo } from "./logo";
 
 const navItems = [
   { label: "Articles", href: "#articles", menu: true },
-  { label: "Podcast", href: "#podcast" },
   { label: "Videos", href: "#videos" },
   { label: "Parenting", href: "/topics/parenting-discipline", menu: true },
   { label: "Couples", href: "/topics/marriage-relationships", menu: true, wideOnly: true },

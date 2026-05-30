@@ -19,6 +19,7 @@ export type PostEditorData = {
   slug: string;
   type: "ARTICLE" | "VIDEO" | "PODCAST";
   status: "DRAFT" | "PUBLISHED";
+  excerpt: string | null;
   coverImage: string | null;
   videoUrl: string | null;
   audioUrl: string | null;
@@ -62,6 +63,7 @@ export async function getPostForEditor(
       slug: true,
       type: true,
       status: true,
+      excerpt: true,
       coverImage: true,
       videoUrl: true,
       audioUrl: true,
@@ -77,6 +79,7 @@ export async function getPostForEditor(
     slug: post.slug,
     type: post.type,
     status: post.status,
+    excerpt: post.excerpt,
     coverImage: post.coverImage,
     videoUrl: post.videoUrl,
     audioUrl: post.audioUrl,

@@ -45,8 +45,8 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
           initialTitle={post.title}
           initialType={post.type}
           initialCover={post.coverImage ?? ""}
+          initialExcerpt={post.excerpt ?? ""}
           initialVideoUrl={post.videoUrl ?? ""}
-          initialAudioUrl={post.audioUrl ?? ""}
           initialTopicId={post.topicId}
           initialBlocks={post.blocks}
           status={post.status}

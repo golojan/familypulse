@@ -1,4 +1,4 @@
-import { Camera, Mail, MessageCircle, Music2, Video } from "lucide-react";
+import { Camera, Mail, MessageCircle, Video } from "lucide-react";
 import { Logo } from "./logo";
 
 const footerGroups = [
@@ -6,7 +6,6 @@ const footerGroups = [
     title: "Explore",
     links: [
       { label: "Articles", href: "/#articles" },
-      { label: "Podcast", href: "/#podcast" },
       { label: "Videos", href: "/#videos" },
       { label: "Topics", href: "/topics" },
     ],
@@ -69,7 +68,7 @@ export function SiteFooter() {
         <div>
           <h3 className="text-xs font-extrabold text-fp-ink">Follow Us</h3>
           <div className="mt-3 flex gap-2 text-fp-green">
-            {[MessageCircle, Camera, Video, Mail, Music2].map((Icon, index) => (
+            {[MessageCircle, Camera, Video, Mail].map((Icon, index) => (
               <a
                 key={index}
                 className="grid h-7 w-7 place-items-center rounded-full bg-fp-mint"

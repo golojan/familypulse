@@ -90,10 +90,14 @@ export async function savePost(
   const topicIdInput = String(formData.get("topicId") ?? "").trim();
   const typeInput = String(formData.get("type") ?? "ARTICLE");
   const videoUrl = String(formData.get("videoUrl") ?? "").trim() || null;
-  const audioUrl = String(formData.get("audioUrl") ?? "").trim() || null;
+  // Podcasts are published as video too — there is no separate audio source.
+  const audioUrl = null;
   const blocks = readBlocks(formData);
   const cover = coverInput || deriveCover(blocks);
-  const excerpt = deriveExcerpt(blocks);
+  // SEO description: use the author's text, falling back to one derived from the
+  // body so the meta description / excerpt is never empty.
+  const excerptInput = String(formData.get("excerpt") ?? "").trim();
+  const excerpt = excerptInput || deriveExcerpt(blocks);
   const blocksJson = JSON.parse(JSON.stringify(blocks)) as object;
   const topicId = topicIdInput || null;
   const type = Object.values(PostType).includes(typeInput as PostType)

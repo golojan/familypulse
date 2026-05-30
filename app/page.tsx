@@ -1,7 +1,6 @@
 import {
   articles,
   mediaCards,
-  podcasts,
   popularPosts,
   quickTopics,
   trendingTopics,
@@ -13,10 +12,6 @@ import { HeroSliderCard } from "@/components/hero-slider-card";
 import { MediaGrid } from "@/components/media-grid";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 import { NewsletterCard } from "@/components/newsletter-card";
-import { PodcastCTA } from "@/components/podcast-cta";
-import { PodcastEpisodeList } from "@/components/podcast-episode-list";
-import { PodcastHighlights } from "@/components/podcast-highlights";
-import { PodcastPromo } from "@/components/podcast-promo";
 import { PopularPosts } from "@/components/popular-posts";
 import { QuickTopics } from "@/components/quick-topics";
 import { SiteFooter } from "@/components/site-footer";
@@ -36,9 +31,8 @@ export default async function FamilyPulseLanding() {
         <div className="min-w-0">
           <HeroSliderCard />
 
-          <section id="articles" className="mt-4 grid gap-4 lg:grid-cols-[1.2fr_0.92fr]">
+          <section id="articles" className="mt-4">
             <FeaturedArticles articles={articles} />
-            <PodcastEpisodeList episodes={podcasts} />
           </section>
 
           <section className="mt-4 grid gap-4 lg:grid-cols-[1.18fr_0.82fr] 2xl:grid-cols-1">
@@ -46,7 +40,6 @@ export default async function FamilyPulseLanding() {
 
             <aside className="grid gap-4 lg:grid-cols-1 2xl:hidden">
               <QuickTopics topics={quickTopics} />
-              <PodcastHighlights episodes={podcasts} />
             </aside>
           </section>
 
@@ -54,8 +47,7 @@ export default async function FamilyPulseLanding() {
 
           <CategoryBlogSections sections={topicSections} />
 
-          <section className="mt-4 grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
-            <PodcastCTA />
+          <section className="mt-4">
             <NewsletterCard />
           </section>
         </div>
@@ -65,8 +57,6 @@ export default async function FamilyPulseLanding() {
             <PopularPosts posts={popularPosts} />
           </div>
           <QuickTopics topics={quickTopics} dense />
-          <PodcastPromo />
-          <PodcastHighlights episodes={podcasts} />
         </aside>
       </div>
 
