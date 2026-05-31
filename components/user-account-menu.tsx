@@ -3,7 +3,15 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, Images, LayoutDashboard, LogOut, PenLine, UserRound } from "lucide-react";
+import {
+  ChevronDown,
+  Images,
+  LayoutDashboard,
+  LogOut,
+  PenLine,
+  Settings,
+  UserRound,
+} from "lucide-react";
 import { logout } from "@/app/auth-actions";
 
 type UserAccountMenuProps = {
@@ -11,9 +19,16 @@ type UserAccountMenuProps = {
   email?: string | null;
   image?: string | null;
   canManagePosts: boolean;
+  isSuperadmin?: boolean;
 };
 
-export function UserAccountMenu({ name, email, image, canManagePosts }: UserAccountMenuProps) {
+export function UserAccountMenu({
+  name,
+  email,
+  image,
+  canManagePosts,
+  isSuperadmin = false,
+}: UserAccountMenuProps) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const initials = getInitials(name ?? email ?? "Account");
@@ -110,6 +125,17 @@ export function UserAccountMenu({ name, email, image, canManagePosts }: UserAcco
               <UserRound className="h-4 w-4 text-fp-green" />
               Profile
             </Link>
+            {isSuperadmin ? (
+              <Link
+                role="menuitem"
+                className="flex items-center gap-3 px-4 py-3 text-sm font-bold text-fp-ink hover:bg-fp-mint/60"
+                href="/admin/settings"
+                onClick={() => setOpen(false)}
+              >
+                <Settings className="h-4 w-4 text-fp-green" />
+                Site settings
+              </Link>
+            ) : null}
             <form action={logout} className="border-t border-fp-line">
               <button
                 role="menuitem"

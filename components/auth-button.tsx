@@ -22,10 +22,12 @@ export async function AuthButton() {
 
   const canManagePosts =
     session.user.roles?.some((role) => CAN_MANAGE_POSTS.includes(role)) ?? false;
+  const isSuperadmin = session.user.roles?.includes("SUPERADMIN") ?? false;
 
   return (
     <UserAccountMenu
       canManagePosts={canManagePosts}
+      isSuperadmin={isSuperadmin}
       email={session.user.email}
       image={session.user.image}
       name={session.user.name}
