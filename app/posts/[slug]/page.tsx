@@ -6,6 +6,8 @@ import { getArticleHref } from "@/lib/familypulse-data";
 import { type Block } from "@/lib/posts";
 import { getPostPageData } from "@/lib/topics-data";
 import { isYouTubeUrl, youTubeEmbedUrl, youTubeId } from "@/lib/video";
+import { PublicRail } from "@/components/public-rail";
+import { PublicShell } from "@/components/public-shell";
 
 export const dynamic = "force-dynamic";
 
@@ -19,9 +21,24 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
   const { post, relatedPosts } = data;
 
+  const similar = relatedPosts.map((related) => ({
+    title: related.title,
+    image: related.image,
+    meta: related.meta,
+    read: related.read,
+    href: related.href,
+  }));
+
   return (
-    <main className="min-h-screen bg-background px-4 py-8 font-sans text-fp-ink sm:px-8">
-      <article className="mx-auto max-w-[980px]">
+    <PublicShell
+      rail={
+        <PublicRail
+          similar={similar}
+          similarTitle={`More in ${post.topicTitle ?? "Family Life"}`}
+        />
+      }
+    >
+      <article className="min-w-0">
         <Link
           className="inline-flex items-center gap-2 text-sm font-extrabold text-fp-green"
           href={post.topicHref ?? "/topics"}
@@ -84,9 +101,9 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
       </article>
 
       {relatedPosts.length > 0 ? (
-        <section className="mx-auto mt-8 max-w-[980px]">
+        <section className="mt-8">
           <h2 className="text-2xl font-bold text-fp-ink">Related in {post.topicTitle}</h2>
-          <div className="mt-4 grid gap-4 sm:grid-cols-3">
+          <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {relatedPosts.map((related) => (
               <Link
                 key={related.slug}
@@ -107,7 +124,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
           </div>
         </section>
       ) : null}
-    </main>
+    </PublicShell>
   );
 }
 

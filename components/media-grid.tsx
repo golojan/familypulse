@@ -2,6 +2,7 @@ import type { MediaCard } from "@/lib/familypulse-data";
 import { NewsCard } from "./news-card";
 
 export function MediaGrid({ cards }: { cards: MediaCard[] }) {
+  if (cards.length === 0) return null;
   return (
     <div
       id="videos"

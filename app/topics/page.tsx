@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { listTopicsWithCounts } from "@/lib/topics-data";
+import { PublicShell } from "@/components/public-shell";
 
 export const dynamic = "force-dynamic";
 
@@ -8,8 +9,8 @@ export default async function TopicsPage() {
   const topics = await listTopicsWithCounts();
 
   return (
-    <main className="min-h-screen bg-background px-4 py-8 font-sans text-fp-ink sm:px-8">
-      <section className="mx-auto max-w-[1200px]">
+    <PublicShell>
+      <section className="mx-auto max-w-[1200px] px-4 py-8 sm:px-8">
         <div className="max-w-2xl">
           <p className="text-sm font-extrabold uppercase text-fp-green">Topics</p>
           <h1 className="mt-3 text-4xl font-bold leading-tight text-fp-ink">
@@ -43,6 +44,6 @@ export default async function TopicsPage() {
           ))}
         </div>
       </section>
-    </main>
+    </PublicShell>
   );
 }

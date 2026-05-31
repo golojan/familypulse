@@ -12,15 +12,8 @@ import {
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import {
-  allPosts as fallbackPosts,
-  articles as fallbackArticles,
-  getPostBySlug as getFallbackPostBySlug,
-  getPostsByTopicSlug as getFallbackPostsByTopicSlug,
   getTopicBySlug as getFallbackTopicBySlug,
-  mediaCards as fallbackMediaCards,
-  popularPosts as fallbackPopularPosts,
   slugify,
-  topicBlogSections as fallbackTopicSections,
   topics as fallbackTopics,
   type Article,
   type MediaCard,
@@ -233,14 +226,11 @@ export async function listTopicsWithCounts() {
       .sort((a, b) => topicOrder(a.slug) - topicOrder(b.slug))
       .map((topic) => ({
         ...toTopic(topic),
-        postCount: topic._count.posts || getFallbackPostsByTopicSlug(topic.slug).length,
+        postCount: topic._count.posts,
       }));
   } catch (error) {
     warnTopicStoreFallback(error);
-    return fallbackTopics.map((topic) => ({
-      ...topic,
-      postCount: getFallbackPostsByTopicSlug(topic.slug).length,
-    }));
+    return fallbackTopics.map((topic) => ({ ...topic, postCount: 0 }));
   }
 }
 
@@ -258,26 +248,19 @@ export async function listTopicSectionsForLanding(limit = 7): Promise<TopicBlogS
         },
       },
     });
-    const fallbackBySlug = new Map(fallbackTopicSections.map((section) => [section.slug, section]));
-
-    const sections = topics
+    return topics
       .sort((a, b) => topicOrder(a.slug) - topicOrder(b.slug))
-      .map((topic) => {
-        const posts = topic.posts.map(dbPostToArticle);
-        const fallback = fallbackBySlug.get(topic.slug);
-
-        return {
-          title: topic.title,
-          slug: topic.slug,
-          href: `/topics/${topic.slug}`,
-          posts: posts.length ? posts : (fallback?.posts ?? []),
-        };
-      });
-
-    return sections.filter((section) => section.posts.length > 0);
+      .map((topic) => ({
+        title: topic.title,
+        slug: topic.slug,
+        href: `/topics/${topic.slug}`,
+        posts: topic.posts.map(dbPostToArticle),
+      }))
+      // Hide topic sections that have no published posts.
+      .filter((section) => section.posts.length > 0);
   } catch (error) {
     warnTopicStoreFallback(error);
-    return fallbackTopicSections;
+    return [];
   }
 }
 
@@ -290,22 +273,21 @@ const PUBLISHED_WITH_TOPIC = {
 
 /**
  * Latest published posts (any type) as Articles, for the homepage "Featured
- * Articles" rail. Falls back to the static set when the store is empty/unavailable.
+ * Articles" rail. Real data only — returns an empty array when there are none.
  */
 export async function listFeaturedPosts(limit = 3): Promise<Article[]> {
   try {
     const posts = await prisma.post.findMany({ ...PUBLISHED_WITH_TOPIC, take: limit });
-    if (posts.length === 0) return fallbackArticles;
     return posts.map(dbPostToArticle);
   } catch (error) {
     warnTopicStoreFallback(error);
-    return fallbackArticles;
+    return [];
   }
 }
 
 /**
  * Latest published video/podcast posts as MediaCards, for the homepage "Videos"
- * grid. Falls back to the static set when there are none.
+ * grid. Real data only — returns an empty array when there are none.
  */
 export async function listVideoPosts(limit = 5): Promise<MediaCard[]> {
   try {
@@ -314,7 +296,6 @@ export async function listVideoPosts(limit = 5): Promise<MediaCard[]> {
       where: { status: "PUBLISHED", type: { in: ["VIDEO", "PODCAST"] } },
       take: limit,
     });
-    if (posts.length === 0) return fallbackMediaCards;
     return posts.map((post) => {
       const article = dbPostToArticle(post);
       return {
@@ -327,19 +308,18 @@ export async function listVideoPosts(limit = 5): Promise<MediaCard[]> {
     });
   } catch (error) {
     warnTopicStoreFallback(error);
-    return fallbackMediaCards;
+    return [];
   }
 }
 
 /**
  * Most recent published posts as PopularPosts, for the homepage sidebar. (We
- * don't track views, so "popular" is approximated by recency.) Falls back to
- * the static set when empty.
+ * don't track views, so "popular" is approximated by recency.) Real data only —
+ * returns an empty array when there are none.
  */
 export async function listPopularPosts(limit = 5): Promise<PopularPost[]> {
   try {
     const posts = await prisma.post.findMany({ ...PUBLISHED_WITH_TOPIC, take: limit });
-    if (posts.length === 0) return fallbackPopularPosts;
     return posts.map((post) => {
       const article = dbPostToArticle(post);
       return {
@@ -352,7 +332,7 @@ export async function listPopularPosts(limit = 5): Promise<PopularPost[]> {
     });
   } catch (error) {
     warnTopicStoreFallback(error);
-    return fallbackPopularPosts;
+    return [];
   }
 }
 
@@ -376,15 +356,13 @@ export async function getTopicPageData(slug: string) {
 
     return {
       topic: toTopic(topic),
-      posts: topic.posts.length
-        ? topic.posts.map(dbPostToArticle)
-        : getFallbackPostsByTopicSlug(slug),
+      posts: topic.posts.map(dbPostToArticle),
     };
   } catch (error) {
     warnTopicStoreFallback(error);
     const topic = getFallbackTopicBySlug(slug);
     if (!topic) return null;
-    return { topic, posts: getFallbackPostsByTopicSlug(slug) };
+    return { topic, posts: [] };
   }
 }
 
@@ -392,14 +370,6 @@ type PostPageResult = {
   post: PostPageData;
   relatedPosts: PostPageData[];
 };
-
-function fallbackArticleToPostPageData(article: Article): PostPageData {
-  return {
-    ...article,
-    blocks: undefined,
-    excerpt: undefined,
-  };
-}
 
 export async function getPostPageData(slug: string): Promise<PostPageResult | null> {
   let post: (DbPost & { topicId: string | null }) | null = null;
@@ -414,20 +384,7 @@ export async function getPostPageData(slug: string): Promise<PostPageResult | nu
   }
 
   if (!post) {
-    const fallbackPost = getFallbackPostBySlug(slug);
-    if (!fallbackPost) return null;
-    return {
-      post: fallbackArticleToPostPageData(fallbackPost),
-      relatedPosts: fallbackPost.topicSlug
-        ? getFallbackPostsByTopicSlug(fallbackPost.topicSlug)
-            .filter((item) => item.slug !== fallbackPost.slug)
-            .slice(0, 3)
-            .map(fallbackArticleToPostPageData)
-        : fallbackPosts
-            .filter((item) => item.slug !== fallbackPost.slug)
-            .slice(0, 3)
-            .map(fallbackArticleToPostPageData),
-    };
+    return null;
   }
 
   const article = dbPostToArticle(post);

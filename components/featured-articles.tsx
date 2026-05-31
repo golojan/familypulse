@@ -3,6 +3,7 @@ import { ArticleCard } from "./article-card";
 import { SectionHeader } from "./section-header";
 
 export function FeaturedArticles({ articles }: { articles: Article[] }) {
+  if (articles.length === 0) return null;
   return (
     <div className="rounded-lg border border-fp-line bg-white p-4 shadow-card sm:p-5">
       <SectionHeader title="Featured Articles" />

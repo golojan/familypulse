@@ -4,6 +4,8 @@ import { ArrowLeft, Clock3 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { getArticleHref } from "@/lib/familypulse-data";
 import { getTopicPageData } from "@/lib/topics-data";
+import { PublicRail } from "@/components/public-rail";
+import { PublicShell } from "@/components/public-shell";
 
 export const dynamic = "force-dynamic";
 
@@ -20,8 +22,8 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
   const TopicIcon = topic.icon;
 
   return (
-    <main className="min-h-screen bg-background px-4 py-8 font-sans text-fp-ink sm:px-8">
-      <section className="mx-auto max-w-[1280px]">
+    <PublicShell rail={<PublicRail />}>
+      <section className="min-w-0">
         <Link
           className="inline-flex items-center gap-2 text-sm font-extrabold text-fp-green"
           href="/topics"
@@ -44,6 +46,14 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
             </span>
           </div>
         </div>
+
+        {posts.length === 0 ? (
+          <div className="mt-5 rounded-lg border border-dashed border-fp-line bg-white p-10 text-center shadow-card">
+            <p className="text-base font-semibold text-fp-muted">
+              No posts in this topic yet. Check back soon.
+            </p>
+          </div>
+        ) : null}
 
         {lead ? (
           <Link
@@ -108,6 +118,6 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
           ))}
         </div>
       </section>
-    </main>
+    </PublicShell>
   );
 }

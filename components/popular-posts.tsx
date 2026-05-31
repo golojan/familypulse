@@ -2,10 +2,17 @@ import Image from "next/image";
 import { slugify, type PopularPost } from "@/lib/familypulse-data";
 import { SectionHeader } from "./section-header";
 
-export function PopularPosts({ posts }: { posts: PopularPost[] }) {
+export function PopularPosts({
+  posts,
+  title = "Popular Posts",
+}: {
+  posts: PopularPost[];
+  title?: string;
+}) {
+  if (posts.length === 0) return null;
   return (
     <section className="rounded-lg border border-fp-line bg-white p-4 shadow-card">
-      <SectionHeader title="Popular Posts" compact />
+      <SectionHeader title={title} compact />
       <div className="space-y-3">
         {posts.map((post, index) => (
           <a
