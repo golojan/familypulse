@@ -4,6 +4,14 @@
 
 This document provides guidelines and best practices for formatting posts within the platform. Adhering to these guidelines will ensure that posts are clear, engaging, and accessible to a wide audience.
 
+## Validation and Moderation
+- Posts should be reviewed for content quality and adherence to community standards before being published. This includes checking for appropriate language, relevance to the topic, and overall readability.
+- Consider implementing a moderation system where posts can be flagged for review if they violate guidelines or contain inappropriate content.
+- Do not repet the same content across multiple posts. Each post should offer unique value and insights to the readers.
+- Posts should be concise and to the point, avoiding unnecessary repetition or filler content. Aim for clarity and brevity while still providing valuable information to the audience.
+- Ensure that posts are well-structured, with a clear introduction, body, and conclusion. This helps readers follow the flow of the content and understand the main points being conveyed.
+- Post title must be unnique, not-repeated, and descriptive of the content. A good title can attract readers and give them a clear idea of what to expect from the post.
+
 ## Editorjs
 
 When using Editorjs for creating posts, consider the following formatting tips to enhance the readability and visual appeal of your content.
