@@ -19,8 +19,12 @@ import { getSetting } from "@/lib/settings";
 
 // Generation hits external APIs + the DB; never cache, always run on request.
 export const dynamic = "force-dynamic";
-// Allow more than the default for the model round-trips.
-export const maxDuration = 60;
+// Each draft is a text-model call + an OpenAI image generation, run sequentially
+// per draft — image generation alone can take 30–60s+. 60s is not enough; allow
+// up to the platform max so a multi-draft run doesn't get killed mid-flight.
+// (Vercel caps this at 300s on Pro/Fluid; Hobby allows 60s — keep AI_DRAFTS_PER_RUN
+// low there. Per-call timeouts in lib/ai-drafts bound each external request.)
+export const maxDuration = 300;
 
 export async function GET(request: NextRequest) {
   // Accept either the admin-managed secret (Site Settings, encrypted in the DB)

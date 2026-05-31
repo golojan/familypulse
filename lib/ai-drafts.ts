@@ -86,9 +86,25 @@ export async function getDraftConfig(): Promise<DraftConfig> {
     apiKey,
     coverImages: (s.AI_DRAFTS_COVER_IMAGES ?? "").trim().toLowerCase() === "true",
     openaiApiKey: s.OPENAI_API_KEY,
-    openaiImageModel: s.OPENAI_IMAGE_MODEL?.trim() || DEFAULT_OPENAI_IMAGE_MODEL,
+    openaiImageModel: normalizeImageModel(s.OPENAI_IMAGE_MODEL),
     openaiImageQuality: parseImageQuality(s.OPENAI_IMAGE_QUALITY),
   };
+}
+
+/**
+ * Normalize the configured OpenAI image model id. Model ids are lowercase ASCII;
+ * admins occasionally paste values with smart/non-breaking hyphens (U+2010–2015,
+ * U+2212) or stray casing/whitespace, which makes OpenAI reject the request with
+ * "model does not exist" and silently disables cover images. We repair that
+ * class of typo here and fall back to the default when blank.
+ */
+function normalizeImageModel(raw: string | undefined): string {
+  const cleaned = (raw ?? "")
+    .normalize("NFKC")
+    .replace(/[‐-―−]/g, "-") // any unicode dash → ASCII hyphen
+    .trim()
+    .toLowerCase();
+  return cleaned || DEFAULT_OPENAI_IMAGE_MODEL;
 }
 
 /** Normalize the configured image quality, defaulting to medium for unknown values. */
@@ -351,6 +367,36 @@ function buildPrompt(topic: TopicSeed): { system: string; user: string } {
   return { system, user };
 }
 
+// Per-call network timeouts (ms). Vercel kills the whole function at its
+// maxDuration; these bound each external call so one hung request fails fast
+// and is recorded, rather than silently consuming the entire budget.
+const TEXT_TIMEOUT_MS = 60_000;
+const IMAGE_TIMEOUT_MS = 120_000;
+
+/**
+ * fetch() with an AbortController timeout. Throws a clear error on timeout so
+ * the caller records it (and, for cover images, the article is still saved).
+ */
+async function fetchWithTimeout(
+  url: string,
+  init: RequestInit,
+  timeoutMs: number,
+  label: string,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      throw new Error(`${label} timed out after ${Math.round(timeoutMs / 1000)}s`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function callProvider(config: DraftConfig, topic: TopicSeed): Promise<GeneratedPost> {
   const { system, user } = buildPrompt(topic);
   const raw =
@@ -362,20 +408,25 @@ async function callProvider(config: DraftConfig, topic: TopicSeed): Promise<Gene
 
 /** Anthropic Messages API. */
 async function callAnthropic(config: DraftConfig, system: string, user: string): Promise<string> {
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-api-key": config.apiKey as string,
-      "anthropic-version": "2023-06-01",
+  const res = await fetchWithTimeout(
+    "https://api.anthropic.com/v1/messages",
+    {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": config.apiKey as string,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: config.model,
+        max_tokens: 4096,
+        system,
+        messages: [{ role: "user", content: user }],
+      }),
     },
-    body: JSON.stringify({
-      model: config.model,
-      max_tokens: 4096,
-      system,
-      messages: [{ role: "user", content: user }],
-    }),
-  });
+    TEXT_TIMEOUT_MS,
+    "Anthropic",
+  );
   if (!res.ok) {
     throw new Error(`Anthropic ${res.status}: ${(await res.text()).slice(0, 300)}`);
   }
@@ -387,22 +438,27 @@ async function callAnthropic(config: DraftConfig, system: string, user: string):
 
 /** DeepSeek's OpenAI-compatible chat completions API. */
 async function callDeepSeek(config: DraftConfig, system: string, user: string): Promise<string> {
-  const res = await fetch("https://api.deepseek.com/chat/completions", {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${config.apiKey as string}`,
+  const res = await fetchWithTimeout(
+    "https://api.deepseek.com/chat/completions",
+    {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${config.apiKey as string}`,
+      },
+      body: JSON.stringify({
+        model: config.model,
+        max_tokens: 4096,
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: user },
+        ],
+      }),
     },
-    body: JSON.stringify({
-      model: config.model,
-      max_tokens: 4096,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
-    }),
-  });
+    TEXT_TIMEOUT_MS,
+    "DeepSeek",
+  );
   if (!res.ok) {
     throw new Error(`DeepSeek ${res.status}: ${(await res.text()).slice(0, 300)}`);
   }
@@ -434,20 +490,25 @@ async function generateCoverImage(
     "No text, no words, no captions, no logos, no watermarks, no illustration or cartoon style. Composition leaves calm negative space.",
   ].join(" ");
 
-  const res = await fetch("https://api.openai.com/v1/images/generations", {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${config.openaiApiKey as string}`,
+  const res = await fetchWithTimeout(
+    "https://api.openai.com/v1/images/generations",
+    {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${config.openaiApiKey as string}`,
+      },
+      body: JSON.stringify({
+        model: config.openaiImageModel,
+        prompt,
+        n: 1,
+        size: "1536x1024", // landscape, suits a cover
+        quality: config.openaiImageQuality, // admin-configurable; defaults to medium
+      }),
     },
-    body: JSON.stringify({
-      model: config.openaiImageModel,
-      prompt,
-      n: 1,
-      size: "1536x1024", // landscape, suits a cover
-      quality: config.openaiImageQuality, // admin-configurable; defaults to medium
-    }),
-  });
+    IMAGE_TIMEOUT_MS,
+    "OpenAI image",
+  );
   if (!res.ok) {
     throw new Error(`OpenAI image ${res.status}: ${(await res.text()).slice(0, 200)}`);
   }
@@ -460,7 +521,7 @@ async function generateCoverImage(
     body = Buffer.from(item.b64_json, "base64");
   } else if (item?.url) {
     // Some configurations return a URL instead of inline base64.
-    const img = await fetch(item.url);
+    const img = await fetchWithTimeout(item.url, {}, 30_000, "image download");
     if (!img.ok) throw new Error(`fetching generated image failed (${img.status})`);
     contentType = img.headers.get("content-type") ?? "image/png";
     body = Buffer.from(await img.arrayBuffer());
