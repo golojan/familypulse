@@ -4,7 +4,17 @@
 
 This document provides guidelines and best practices for formatting posts within the platform. Adhering to these guidelines will ensure that posts are clear, engaging, and accessible to a wide audience.
 
+## Storytelling Pattern (core)
+
+Every FamilyPulse blog post **must open with a heart-touching, engaging, true-to-life family story** that is directly relevant to the topic, and then build its whole message on that story.
+
+- **Open in a moment.** Start the first paragraph in the middle of a relatable, emotionally resonant family scene — give the people first names and a specific, vivid situation (a parent at bedtime, a couple after a hard day, a child's small breakthrough). The goal is to make the reader feel something before any advice appears. Do not put a heading before this opening.
+- **Build on the story.** Each subsequent section should draw a lesson from that same story, referring back to the same characters and moment so the practical guidance feels grounded in real life rather than abstract.
+- **Close the loop.** End by returning to the family from the opening to show hope, growth, or change, then give a clear, encouraging call to action.
+- **Keep it honest.** Stories should be realistic and emotionally true, but illustrative/composite — do not present them as a specific real named person or a true news event.
+
 ## Validation and Moderation
+
 - Posts should be reviewed for content quality and adherence to community standards before being published. This includes checking for appropriate language, relevance to the topic, and overall readability.
 - Consider implementing a moderation system where posts can be flagged for review if they violate guidelines or contain inappropriate content.
 - Do not repet the same content across multiple posts. Each post should offer unique value and insights to the readers.

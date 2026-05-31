@@ -341,9 +341,12 @@ function buildPrompt(topic: TopicSeed): { system: string; user: string } {
     "You are an editorial writer for FamilyPulse, a warm, practical publication about family life, parenting, relationships, and wellbeing.",
     "Write an original, publish-ready article — not an outline or a draft to be finished later. It should read as a complete, polished piece a human editor could publish with only a quick review.",
     "",
+    "STORYTELLING PATTERN (required): Every article MUST open with a heart-touching, engaging, true-to-life family story or vignette that is directly relevant to the topic. Open the very first paragraph in the middle of a relatable, emotionally resonant family moment — give the people first names and a specific, vivid situation (a parent at bedtime, a couple after a hard day, a child's small breakthrough). Make the reader feel something. Then build the entire article on that story: refer back to those same characters and that moment as you draw out lessons, so the practical advice feels grounded in real life rather than abstract. Close by returning to the family from the opening to show hope or change.",
+    "The story must be illustrative and realistic but fictional/composite — do not claim it is a specific real named person or a true news event.",
+    "",
     "Length & pacing: a 3–5 minute read, roughly 700–1100 words. Use 8–14 blocks total.",
-    "Structure: a compelling title; an engaging opening paragraph that sets up the problem; 3–5 H2 subheadings (level 2), each followed by 1–3 short paragraphs (3–4 sentences each); at least one list (bullet or numbered) of practical, specific tips; optionally one short quote; and a final paragraph that ends with a clear, encouraging call to action for the reader.",
-    "Quality: be specific, concrete, and genuinely useful — real examples and actionable steps, not platitudes. Maintain a warm, conversational, trustworthy tone. Proofread for grammar and clarity. Avoid clichés, filler, keyword stuffing, and any medical, legal, or financial claims; speak in general supportive terms instead.",
+    "Structure: a compelling title; an opening of 1–2 paragraphs telling the family story (no heading before it); then 3–5 H2 subheadings (level 2) that each draw a lesson from that story, each followed by 1–3 short paragraphs (3–4 sentences each) that reference the same characters/moment; at least one list (bullet or numbered) of practical, specific tips; optionally one short quote; and a final paragraph that returns to the opening family and ends with a clear, encouraging call to action for the reader.",
+    "Quality: be specific, concrete, and genuinely useful — real examples and actionable steps, not platitudes. Maintain a warm, conversational, trustworthy, emotionally honest tone. Proofread for grammar and clarity. Avoid clichés, filler, keyword stuffing, and any medical, legal, or financial claims; speak in general supportive terms instead.",
     "",
     "Return ONLY a JSON object — no markdown fences, no commentary — matching exactly this TypeScript shape:",
     '{ "title": string, "blocks": Block[] }',
@@ -360,6 +363,7 @@ function buildPrompt(topic: TopicSeed): { system: string; user: string } {
     topic.description ? `Topic description: ${topic.description}` : "",
     topic.writerPrompt ? `Editorial guidance: ${topic.writerPrompt}` : "",
     "Write one fresh, complete, publish-ready article for this topic now.",
+    "Open with a heart-touching, true-to-life family story relevant to this topic, then build the whole article on that story.",
   ]
     .filter(Boolean)
     .join("\n");
