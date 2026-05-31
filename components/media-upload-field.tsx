@@ -31,30 +31,47 @@ export function MediaUploadField({ label, accept, kind, onUploaded }: MediaUploa
     setMessage("");
 
     try {
-      const presign = await fetch("/api/media/presign", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          filename: file.name,
-          contentType: file.type,
-          size: file.size,
-          kind,
-        }),
-      });
-      const signed = (await presign.json()) as PresignResponse;
+      // 1) Ask our server to sign the upload (and create the pending asset).
+      let presign: Response;
+      try {
+        presign = await fetch("/api/media/presign", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            filename: file.name,
+            contentType: file.type,
+            size: file.size,
+            kind,
+          }),
+        });
+      } catch {
+        throw new Error("Couldn't reach the server to prepare the upload. Check your connection.");
+      }
 
-      if (!presign.ok) {
+      const signed = (await presign.json().catch(() => ({}))) as Partial<PresignResponse>;
+      if (!presign.ok || !signed.uploadUrl || !signed.media) {
         throw new Error(signed.error ?? "Could not prepare upload.");
       }
 
-      const uploadResponse = await fetch(signed.uploadUrl, {
-        method: "PUT",
-        headers: { "Content-Type": signed.contentType },
-        body: file,
-      });
+      // 2) Upload the bytes directly to storage with the presigned URL. A
+      //    "Failed to fetch" here is almost always the storage bucket rejecting
+      //    the request — wrong/placeholder bucket or missing CORS rule allowing
+      //    PUT from this site — so say so rather than a bare network error.
+      let uploadResponse: Response;
+      try {
+        uploadResponse = await fetch(signed.uploadUrl, {
+          method: "PUT",
+          headers: { "Content-Type": signed.contentType ?? file.type },
+          body: file,
+        });
+      } catch {
+        throw new Error(
+          "Upload to storage was blocked. Verify the storage bucket is configured and its CORS policy allows PUT from this site (Site Settings → Storage).",
+        );
+      }
 
       if (!uploadResponse.ok) {
-        throw new Error("Upload to storage failed.");
+        throw new Error(`Storage rejected the upload (${uploadResponse.status}).`);
       }
 
       await fetch(`/api/media/${signed.media.id}/complete`, { method: "POST" });
