@@ -8,6 +8,8 @@ type MediaUploadFieldProps = {
   accept: string;
   kind?: "IMAGE" | "VIDEO" | "AUDIO" | "DOCUMENT";
   onUploaded: (url: string) => void;
+  /** "dropzone" (default) is the large drop target; "button" is a compact pill. */
+  variant?: "dropzone" | "button";
 };
 
 type PresignResponse = {
@@ -20,7 +22,13 @@ type PresignResponse = {
   error?: string;
 };
 
-export function MediaUploadField({ label, accept, kind, onUploaded }: MediaUploadFieldProps) {
+export function MediaUploadField({
+  label,
+  accept,
+  kind,
+  onUploaded,
+  variant = "dropzone",
+}: MediaUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [state, setState] = useState<"idle" | "uploading" | "done" | "error">("idle");
   const [message, setMessage] = useState("");
@@ -86,6 +94,47 @@ export function MediaUploadField({ label, accept, kind, onUploaded }: MediaUploa
     }
   }
 
+  const hiddenInput = (
+    <input
+      ref={inputRef}
+      type="file"
+      accept={accept}
+      className="hidden"
+      onChange={(event) => {
+        const file = event.target.files?.[0];
+        if (file) void upload(file);
+      }}
+    />
+  );
+
+  if (variant === "button") {
+    return (
+      <div className="grid justify-items-end gap-1.5">
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          disabled={state === "uploading"}
+          className="inline-flex items-center gap-2 rounded-md bg-fp-green px-4 py-2.5 text-sm font-extrabold text-white shadow-green disabled:opacity-60"
+        >
+          {state === "uploading" ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <UploadCloud className="h-4 w-4" />
+          )}
+          {state === "uploading" ? "Uploading..." : label}
+        </button>
+        {hiddenInput}
+        {message ? (
+          <p
+            className={`text-xs font-bold ${state === "error" ? "text-red-600" : "text-fp-green"}`}
+          >
+            {message}
+          </p>
+        ) : null}
+      </div>
+    );
+  }
+
   return (
     <div className="grid gap-2">
       <button
@@ -116,16 +165,7 @@ export function MediaUploadField({ label, accept, kind, onUploaded }: MediaUploa
         )}
         {state === "uploading" ? "Uploading..." : label}
       </button>
-      <input
-        ref={inputRef}
-        type="file"
-        accept={accept}
-        className="hidden"
-        onChange={(event) => {
-          const file = event.target.files?.[0];
-          if (file) void upload(file);
-        }}
-      />
+      {hiddenInput}
       {message ? (
         <p className={`text-xs font-bold ${state === "error" ? "text-red-600" : "text-fp-green"}`}>
           {message}

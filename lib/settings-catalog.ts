@@ -25,6 +25,8 @@ export type SettingKey =
   | "GEMINI_API_KEY"
   | "GEMINI_IMAGE_MODEL"
   | "AI_DRAFTS_COVER_IMAGES"
+  | "ADSENSE_CLIENT_ID"
+  | "ADSENSE_AUTO_ADS"
   | "CRON_SECRET";
 
 export type SettingOption = { value: string; label: string };
@@ -236,6 +238,31 @@ export const SETTING_GROUPS: SettingGroup[] = [
           { value: "gemini-2.5-flash-image", label: "gemini-2.5-flash-image (Nano Banana)" },
         ],
         help: "Used when the image provider is Google Gemini.",
+      },
+    ],
+  },
+  {
+    id: "advertising",
+    title: "Advertising",
+    description:
+      "Google AdSense settings. The Publisher ID powers both the in-post Advert block (AdSense format) and site-wide Auto ads. Leave the Publisher ID blank to disable all AdSense.",
+    fields: [
+      {
+        key: "ADSENSE_CLIENT_ID",
+        label: "AdSense Publisher ID",
+        secret: false,
+        placeholder: "ca-pub-XXXXXXXXXXXXXXXX",
+        help: "Your AdSense client id (starts with ca-pub-). Required for any AdSense ads to render.",
+      },
+      {
+        key: "ADSENSE_AUTO_ADS",
+        label: "Auto ads (site-wide)",
+        secret: false,
+        options: [
+          { value: "false", label: "Off" },
+          { value: "true", label: "On" },
+        ],
+        help: "When On, Google Auto ads run across all public pages (AdSense decides ad placement). Also enable Auto ads for this site in your AdSense console. Requires a Publisher ID.",
       },
     ],
   },

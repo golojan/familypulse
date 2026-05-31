@@ -1,17 +1,26 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { FileText, PenLine, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, FileText, PenLine, Plus } from "lucide-react";
 import { auth } from "@/auth";
-import { listPostsByAuthor, type PostListItem } from "@/lib/posts-data";
+import { listPostsPage, type PostListItem, type PostStatusFilter } from "@/lib/posts-data";
 import { PostRowActions } from "@/components/post-row-actions";
 
 const CAN_MANAGE_ROLES = ["EDITOR", "SUPERADMIN"];
+const PER_PAGE = 10;
 
 export const metadata = {
   title: "Dashboard · FamilyPulse",
 };
 
-export default async function DashboardPage() {
+function parseStatus(value: string | undefined): PostStatusFilter {
+  return value === "DRAFT" || value === "PUBLISHED" ? value : "ALL";
+}
+
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string; status?: string }>;
+}) {
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -39,9 +48,22 @@ export default async function DashboardPage() {
     );
   }
 
-  const posts = await listPostsByAuthor(session.user.id);
-  const drafts = posts.filter((p) => p.status === "DRAFT");
-  const published = posts.filter((p) => p.status === "PUBLISHED");
+  const params = await searchParams;
+  const status = parseStatus(params.status);
+  const requestedPage = Number.parseInt(params.page ?? "1", 10);
+  const data = await listPostsPage(session.user.id, {
+    page: Number.isFinite(requestedPage) ? requestedPage : 1,
+    perPage: PER_PAGE,
+    status,
+  });
+
+  const tabs: Array<{ key: PostStatusFilter; label: string; count: number }> = [
+    { key: "ALL", label: "All", count: data.draftCount + data.publishedCount },
+    { key: "DRAFT", label: "Drafts", count: data.draftCount },
+    { key: "PUBLISHED", label: "Published", count: data.publishedCount },
+  ];
+
+  const hasAnyPosts = data.draftCount + data.publishedCount > 0;
 
   return (
     <main className="min-h-screen bg-background px-4 py-8 font-sans text-fp-ink sm:px-6 lg:px-10">
@@ -53,8 +75,8 @@ export default async function DashboardPage() {
             </p>
             <h1 className="mt-1 text-3xl font-bold">Your posts</h1>
             <p className="mt-2 text-sm font-semibold text-fp-muted">
-              {published.length} published · {drafts.length} draft
-              {drafts.length === 1 ? "" : "s"}
+              {data.publishedCount} published · {data.draftCount} draft
+              {data.draftCount === 1 ? "" : "s"}
             </p>
           </div>
           <Link
@@ -65,12 +87,39 @@ export default async function DashboardPage() {
           </Link>
         </header>
 
-        {posts.length === 0 ? (
+        {!hasAnyPosts ? (
           <EmptyState />
         ) : (
-          <div className="mt-8 grid gap-8">
-            <PostSection title="Drafts" posts={drafts} emptyHint="No drafts in progress." />
-            <PostSection title="Published" posts={published} emptyHint="Nothing published yet." />
+          <div className="mt-8 grid gap-4">
+            <div className="flex flex-wrap gap-2">
+              {tabs.map((tab) => (
+                <Link
+                  key={tab.key}
+                  href={tab.key === "ALL" ? "/dashboard" : `/dashboard?status=${tab.key}`}
+                  className={`rounded-md px-3 py-2 text-xs font-extrabold ${
+                    status === tab.key
+                      ? "bg-fp-green text-white"
+                      : "border border-fp-line bg-white text-fp-muted hover:border-fp-green hover:text-fp-green"
+                  }`}
+                >
+                  {tab.label} ({tab.count})
+                </Link>
+              ))}
+            </div>
+
+            {data.items.length === 0 ? (
+              <p className="rounded-lg border border-dashed border-fp-line bg-white/60 px-4 py-6 text-sm font-semibold text-fp-muted">
+                Nothing here yet.
+              </p>
+            ) : (
+              <ul className="grid gap-3">
+                {data.items.map((post) => (
+                  <PostRow key={post.id} post={post} />
+                ))}
+              </ul>
+            )}
+
+            <Pager page={data.page} totalPages={data.totalPages} status={status} />
           </div>
         )}
       </div>
@@ -78,30 +127,75 @@ export default async function DashboardPage() {
   );
 }
 
-function PostSection({
-  title,
-  posts,
-  emptyHint,
+function Pager({
+  page,
+  totalPages,
+  status,
 }: {
-  title: string;
-  posts: PostListItem[];
-  emptyHint: string;
+  page: number;
+  totalPages: number;
+  status: PostStatusFilter;
 }) {
+  if (totalPages <= 1) return null;
+  const base = status === "ALL" ? "" : `status=${status}&`;
+  const href = (p: number) => `/dashboard?${base}page=${p}`;
+  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+
   return (
-    <section>
-      <h2 className="mb-3 text-xl font-bold">{title}</h2>
-      {posts.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-fp-line bg-white/60 px-4 py-6 text-sm font-semibold text-fp-muted">
-          {emptyHint}
-        </p>
-      ) : (
-        <ul className="grid gap-3">
-          {posts.map((post) => (
-            <PostRow key={post.id} post={post} />
-          ))}
-        </ul>
-      )}
-    </section>
+    <nav className="mt-2 flex items-center justify-center gap-1.5" aria-label="Pagination">
+      <PagerLink href={href(page - 1)} disabled={page <= 1} label="Previous page">
+        <ChevronLeft className="h-4 w-4" />
+      </PagerLink>
+      {pages.map((p) => (
+        <Link
+          key={p}
+          href={href(p)}
+          aria-current={p === page ? "page" : undefined}
+          className={`grid h-9 min-w-9 place-items-center rounded-md px-2 text-sm font-extrabold ${
+            p === page
+              ? "bg-fp-green text-white"
+              : "border border-fp-line bg-white text-fp-muted hover:border-fp-green hover:text-fp-green"
+          }`}
+        >
+          {p}
+        </Link>
+      ))}
+      <PagerLink href={href(page + 1)} disabled={page >= totalPages} label="Next page">
+        <ChevronRight className="h-4 w-4" />
+      </PagerLink>
+    </nav>
+  );
+}
+
+function PagerLink({
+  href,
+  disabled,
+  label,
+  children,
+}: {
+  href: string;
+  disabled: boolean;
+  label: string;
+  children: React.ReactNode;
+}) {
+  if (disabled) {
+    return (
+      <span
+        aria-disabled
+        className="grid h-9 w-9 place-items-center rounded-md border border-fp-line bg-white text-fp-muted/40"
+      >
+        {children}
+      </span>
+    );
+  }
+  return (
+    <Link
+      href={href}
+      aria-label={label}
+      className="grid h-9 w-9 place-items-center rounded-md border border-fp-line bg-white text-fp-muted hover:border-fp-green hover:text-fp-green"
+    >
+      {children}
+    </Link>
   );
 }
 

@@ -50,6 +50,72 @@ export async function listPostsByAuthor(authorId: string): Promise<PostListItem[
   }));
 }
 
+export type PostStatusFilter = "ALL" | "DRAFT" | "PUBLISHED";
+
+export type PostsPage = {
+  items: PostListItem[];
+  total: number;
+  page: number;
+  perPage: number;
+  totalPages: number;
+  draftCount: number;
+  publishedCount: number;
+};
+
+/**
+ * One page of an author's posts (newest activity first), optionally filtered by
+ * status, for the dashboard listing. Returns total counts so the UI can render a
+ * pager and the status tabs.
+ */
+export async function listPostsPage(
+  authorId: string,
+  opts: { page?: number; perPage?: number; status?: PostStatusFilter } = {},
+): Promise<PostsPage> {
+  const perPage = Math.min(50, Math.max(1, opts.perPage ?? 10));
+  const status = opts.status ?? "ALL";
+  const where = {
+    authorId,
+    ...(status === "ALL" ? {} : { status }),
+  };
+
+  const [total, draftCount, publishedCount] = await Promise.all([
+    prisma.post.count({ where }),
+    prisma.post.count({ where: { authorId, status: "DRAFT" } }),
+    prisma.post.count({ where: { authorId, status: "PUBLISHED" } }),
+  ]);
+
+  const totalPages = Math.max(1, Math.ceil(total / perPage));
+  const page = Math.min(Math.max(1, opts.page ?? 1), totalPages);
+
+  const posts = await prisma.post.findMany({
+    where,
+    orderBy: { updatedAt: "desc" },
+    skip: (page - 1) * perPage,
+    take: perPage,
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      excerpt: true,
+      type: true,
+      topic: { select: { title: true } },
+      status: true,
+      publishedAt: true,
+      updatedAt: true,
+    },
+  });
+
+  return {
+    items: posts.map((post) => ({ ...post, topicTitle: post.topic?.title ?? null })),
+    total,
+    page,
+    perPage,
+    totalPages,
+    draftCount,
+    publishedCount,
+  };
+}
+
 /** A single post owned by `authorId`, shaped for the editor. Null if missing or not owned. */
 export async function getPostForEditor(
   id: string,

@@ -2,10 +2,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, Clock3 } from "lucide-react";
 import { notFound } from "next/navigation";
+import { auth } from "@/auth";
 import { getArticleHref } from "@/lib/familypulse-data";
-import { type Block } from "@/lib/posts";
+import { getSetting } from "@/lib/settings";
+import { hasDismissedGate, isSubscribed } from "@/lib/subscription";
 import { getPostPageData } from "@/lib/topics-data";
 import { isYouTubeUrl, youTubeEmbedUrl, youTubeId } from "@/lib/video";
+import { PostBody, type PostGateInfo } from "@/components/post-body";
 import { PublicRail } from "@/components/public-rail";
 import { PublicShell } from "@/components/public-shell";
 
@@ -20,6 +23,20 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
   }
 
   const { post, relatedPosts } = data;
+  const adsenseClientId = await getSetting("ADSENSE_CLIENT_ID");
+
+  // Metered paywall: gate article bodies for readers who haven't subscribed and
+  // haven't chosen "subscribe later" on this post. Video/podcast posts (player
+  // based) are never gated. Subscription is global and tied to a signed-in user.
+  const session = await auth();
+  const isArticle = post.type === "ARTICLE";
+  let gate: PostGateInfo | null = null;
+  if (isArticle && post.id) {
+    const [subscribed, dismissed] = await Promise.all([isSubscribed(), hasDismissedGate(post.id)]);
+    if (!subscribed && !dismissed) {
+      gate = { postId: post.id, postSlug: slug, isAuthenticated: Boolean(session?.user?.id) };
+    }
+  }
 
   const similar = relatedPosts.map((related) => ({
     title: related.title,
@@ -97,6 +114,8 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
           blocks={post.blocks}
           excerpt={post.excerpt}
           topicName={post.topicTitle ?? post.tag}
+          adsenseClientId={adsenseClientId}
+          gate={gate}
         />
       </article>
 
@@ -125,102 +144,5 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
         </section>
       ) : null}
     </PublicShell>
-  );
-}
-
-function PostBody({
-  blocks,
-  excerpt,
-  topicName,
-}: {
-  blocks?: Block[];
-  excerpt?: string | null;
-  topicName: string;
-}) {
-  if (!blocks?.length) {
-    return (
-      <div className="mt-8 rounded-lg border border-fp-line bg-white p-5 text-base font-semibold leading-8 text-fp-muted shadow-card sm:p-8">
-        <p>
-          {excerpt ||
-            `This FamilyPulse article belongs to the ${topicName} topic. It is part of a grouped reading path, so readers can move from this post into related guidance without searching manually.`}
-        </p>
-        <p className="mt-5">
-          Use the related posts below to continue through the same topic, or return to the topic
-          page to view the full collection.
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="mt-8 rounded-lg border border-fp-line bg-white p-5 text-base font-semibold leading-8 text-fp-muted shadow-card sm:p-8">
-      {blocks.map((block) => {
-        if (block.type === "heading") {
-          const HeadingTag = block.level === 3 ? "h3" : "h2";
-          return (
-            <HeadingTag
-              key={block.id}
-              className="mt-7 first:mt-0 text-2xl font-bold leading-tight text-fp-ink"
-            >
-              {block.text}
-            </HeadingTag>
-          );
-        }
-        if (block.type === "paragraph") {
-          return (
-            <p key={block.id} className="mt-5 first:mt-0">
-              {block.text}
-            </p>
-          );
-        }
-        if (block.type === "quote") {
-          return (
-            <blockquote
-              key={block.id}
-              className="mt-6 border-l-4 border-fp-green bg-fp-mint/40 px-5 py-4 text-lg font-bold leading-8 text-fp-ink"
-            >
-              {block.text}
-              {block.cite ? (
-                <cite className="mt-3 block text-sm font-semibold text-fp-muted">
-                  - {block.cite}
-                </cite>
-              ) : null}
-            </blockquote>
-          );
-        }
-        if (block.type === "list") {
-          const ListTag = block.ordered ? "ol" : "ul";
-          return (
-            <ListTag
-              key={block.id}
-              className={`mt-5 space-y-2 pl-5 ${block.ordered ? "list-decimal" : "list-disc"}`}
-            >
-              {block.items.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ListTag>
-          );
-        }
-
-        return (
-          <figure key={block.id} className="mt-7">
-            <div className="relative min-h-[18rem] overflow-hidden rounded-md">
-              <Image
-                src={block.url}
-                alt={block.alt ?? ""}
-                fill
-                className="object-cover"
-                sizes="(max-width: 1024px) 100vw, 820px"
-              />
-            </div>
-            {block.caption ? (
-              <figcaption className="mt-2 text-sm font-semibold text-fp-muted">
-                {block.caption}
-              </figcaption>
-            ) : null}
-          </figure>
-        );
-      })}
-    </div>
   );
 }

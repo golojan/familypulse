@@ -16,33 +16,19 @@ export function MediaLibrary({ assets }: { assets: MediaAssetItem[] }) {
   return (
     <div className="grid gap-6">
       <section className="rounded-lg border border-fp-line bg-white p-5 shadow-card">
-        <h2 className="text-lg font-bold text-fp-ink">Upload media</h2>
-        <p className="mt-1 text-sm font-semibold text-fp-muted">
-          Files upload directly to DigitalOcean Spaces using signed URLs and are tracked here.
-        </p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-bold text-fp-ink">Upload media</h2>
+            <p className="mt-1 text-sm font-semibold text-fp-muted">
+              Files upload directly to DigitalOcean Spaces using signed URLs and are tracked here.
+            </p>
+          </div>
+          {/* One upload button; the file type (image/video/audio/document) is
+              detected from the chosen file and stored by the server. */}
           <MediaUploadField
-            accept="image/*"
-            kind="IMAGE"
-            label="Upload image"
-            onUploaded={() => window.location.reload()}
-          />
-          <MediaUploadField
-            accept="video/*"
-            kind="VIDEO"
-            label="Upload video"
-            onUploaded={() => window.location.reload()}
-          />
-          <MediaUploadField
-            accept="audio/*"
-            kind="AUDIO"
-            label="Upload audio"
-            onUploaded={() => window.location.reload()}
-          />
-          <MediaUploadField
-            accept="application/pdf"
-            kind="DOCUMENT"
-            label="Upload document"
+            variant="button"
+            accept="image/*,video/*,audio/*,application/pdf"
+            label="Upload"
             onUploaded={() => window.location.reload()}
           />
         </div>

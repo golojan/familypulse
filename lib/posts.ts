@@ -4,13 +4,25 @@
 // Keeping this shape isolated lets the editor, renderer, and server actions share
 // one source of truth.
 
-export const BLOCK_TYPES = ["heading", "paragraph", "quote", "list", "image"] as const;
+export const BLOCK_TYPES = ["heading", "paragraph", "quote", "list", "image", "advert"] as const;
 
 export type BlockType = (typeof BLOCK_TYPES)[number];
 
 type BaseBlock = {
   id: string;
 };
+
+export const IMAGE_ALIGNMENTS = ["left", "center", "right", "full"] as const;
+export type ImageAlign = (typeof IMAGE_ALIGNMENTS)[number];
+
+export const IMAGE_WIDTHS = ["small", "medium", "large", "full"] as const;
+export type ImageWidth = (typeof IMAGE_WIDTHS)[number];
+
+export const ADVERT_FORMATS = ["image", "text", "embed"] as const;
+export type AdvertFormat = (typeof ADVERT_FORMATS)[number];
+
+export const ADVERT_PROVIDERS = ["adsense", "iframe"] as const;
+export type AdvertProvider = (typeof ADVERT_PROVIDERS)[number];
 
 export type HeadingBlock = BaseBlock & {
   type: "heading";
@@ -40,9 +52,44 @@ export type ImageBlock = BaseBlock & {
   url: string;
   alt?: string;
   caption?: string;
+  /** Horizontal placement on the page. Defaults to "center". */
+  align?: ImageAlign;
+  /** Rendered width. Defaults to "large". */
+  width?: ImageWidth;
 };
 
-export type Block = HeadingBlock | ParagraphBlock | QuoteBlock | ListBlock | ImageBlock;
+/**
+ * An advertisement an editor can drop anywhere in the body. Three shapes:
+ *  - "image": a banner creative (imageUrl) linking to href.
+ *  - "text":  a styled promo box (heading + body + CTA linking to href).
+ *  - "embed": an ad-network unit — a Google AdSense slot (provider "adsense",
+ *    adSlot) rendered against the site's publisher id, or a sandboxed iframe
+ *    (provider "iframe", embedSrc). Raw executable HTML is never injected.
+ */
+export type AdvertBlock = BaseBlock & {
+  type: "advert";
+  format: AdvertFormat;
+  // image format
+  imageUrl?: string;
+  href?: string;
+  alt?: string;
+  // text format
+  heading?: string;
+  body?: string;
+  ctaLabel?: string;
+  // embed format
+  provider?: AdvertProvider;
+  adSlot?: string;
+  embedSrc?: string;
+};
+
+export type Block =
+  | HeadingBlock
+  | ParagraphBlock
+  | QuoteBlock
+  | ListBlock
+  | ImageBlock
+  | AdvertBlock;
 
 export const BLOCK_LABELS: Record<BlockType, string> = {
   heading: "Heading",
@@ -50,6 +97,7 @@ export const BLOCK_LABELS: Record<BlockType, string> = {
   quote: "Quote",
   list: "List",
   image: "Image",
+  advert: "Advert",
 };
 
 let blockSeq = 0;
@@ -73,7 +121,9 @@ export function createBlock(type: BlockType): Block {
     case "list":
       return { id, type, ordered: false, items: [""] };
     case "image":
-      return { id, type, url: "", alt: "", caption: "" };
+      return { id, type, url: "", alt: "", caption: "", align: "center", width: "large" };
+    case "advert":
+      return { id, type, format: "image", imageUrl: "", href: "", alt: "" };
   }
 }
 
@@ -132,11 +182,41 @@ export function parseBlocks(value: unknown): Block[] {
           url: typeof b.url === "string" ? b.url : "",
           alt: typeof b.alt === "string" ? b.alt : "",
           caption: typeof b.caption === "string" ? b.caption : "",
+          align: oneOf(b.align, IMAGE_ALIGNMENTS, "center"),
+          width: oneOf(b.width, IMAGE_WIDTHS, "large"),
+        });
+        break;
+      case "advert":
+        blocks.push({
+          id,
+          type: "advert",
+          format: oneOf(b.format, ADVERT_FORMATS, "image"),
+          imageUrl: str(b.imageUrl),
+          href: str(b.href),
+          alt: str(b.alt),
+          heading: str(b.heading),
+          body: str(b.body),
+          ctaLabel: str(b.ctaLabel),
+          provider: oneOf(b.provider, ADVERT_PROVIDERS, "adsense"),
+          adSlot: str(b.adSlot),
+          embedSrc: str(b.embedSrc),
         });
         break;
     }
   }
   return blocks;
+}
+
+/** Coerce to string, defaulting to "". */
+function str(value: unknown): string {
+  return typeof value === "string" ? value : "";
+}
+
+/** Return value if it's one of `allowed`, else `fallback`. */
+function oneOf<T extends string>(value: unknown, allowed: readonly T[], fallback: T): T {
+  return typeof value === "string" && (allowed as readonly string[]).includes(value)
+    ? (value as T)
+    : fallback;
 }
 
 /** Strips empty blocks so we don't persist blank trailing paragraphs etc. */
@@ -158,8 +238,22 @@ export function cleanBlocks(blocks: Block[]): Block[] {
           return block.items.length > 0;
         case "image":
           return block.url.trim().length > 0;
+        case "advert":
+          return advertHasContent(block);
       }
     });
+}
+
+/** Whether an advert block carries enough to render for its format. */
+function advertHasContent(block: AdvertBlock): boolean {
+  switch (block.format) {
+    case "image":
+      return !!block.imageUrl?.trim();
+    case "text":
+      return !!(block.heading?.trim() || block.body?.trim());
+    case "embed":
+      return block.provider === "iframe" ? !!block.embedSrc?.trim() : !!block.adSlot?.trim(); // adsense: needs a slot (client id comes from settings)
+  }
 }
 
 /** A short plain-text summary derived from the first paragraph/heading. */

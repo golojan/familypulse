@@ -3,36 +3,39 @@
 import { useActionState, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 import {
-  ArrowDown,
-  ArrowUp,
-  GripVertical,
-  Heading,
-  Image as ImageIcon,
-  List,
-  Loader2,
-  Plus,
-  Quote,
-  Save,
-  Send,
-  Sparkles,
-  Text,
-  Trash2,
-} from "lucide-react";
-import { BLOCK_LABELS, createBlock, type Block, type BlockType } from "@/lib/posts";
+  DndContext,
+  PointerSensor,
+  KeyboardSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { Eye, Loader2, Pencil, Save, Send, Sparkles, Trash2 } from "lucide-react";
+import {
+  createBlock,
+  type Block,
+  type BlockType,
+  type ImageAlign,
+  type ImageWidth,
+} from "@/lib/posts";
 import type { TopicOption } from "@/lib/topics-data";
 import { generateCover, savePost, type ActionState } from "@/app/dashboard/posts/actions";
 import { MediaUploadField } from "./media-upload-field";
 import { VideoEditor } from "./video-editor";
+import { PostBody } from "./post-body";
+import { BlockPalette } from "./editor/block-palette";
+import { SortableBlock } from "./editor/sortable-block";
+import { ImageSettings } from "./editor/image-settings";
+import { AdvertFields } from "./editor/advert-fields";
 
 const INITIAL: ActionState = { ok: false };
-
-const BLOCK_ICONS: Record<BlockType, typeof Text> = {
-  heading: Heading,
-  paragraph: Text,
-  quote: Quote,
-  list: List,
-  image: ImageIcon,
-};
 
 type PostEditorProps = {
   postId?: string;
@@ -70,6 +73,12 @@ export function PostEditor({
   );
   const [coverBusy, setCoverBusy] = useState(false);
   const [coverError, setCoverError] = useState("");
+  const [previewing, setPreviewing] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   async function handleGenerateCover() {
     if (coverBusy) return;
@@ -80,11 +89,7 @@ export function PostEditor({
     }
     setCoverBusy(true);
     try {
-      const result = await generateCover({
-        topicId: topicId || null,
-        title,
-        description,
-      });
+      const result = await generateCover({ topicId: topicId || null, title, description });
       if (result.ok) {
         setCover(result.url);
       } else {
@@ -112,21 +117,30 @@ export function PostEditor({
     setBlocks((prev) => prev.map((b) => (b.id === id ? ({ ...b, ...patch } as Block) : b)));
   }
 
-  function add(type: BlockType) {
+  function append(type: BlockType) {
     setBlocks((prev) => [...prev, createBlock(type)]);
+  }
+
+  function insertAt(index: number, type: BlockType) {
+    setBlocks((prev) => {
+      const next = [...prev];
+      next.splice(index, 0, createBlock(type));
+      return next;
+    });
   }
 
   function remove(id: string) {
     setBlocks((prev) => prev.filter((b) => b.id !== id));
   }
 
-  function move(index: number, dir: -1 | 1) {
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
     setBlocks((prev) => {
-      const next = [...prev];
-      const target = index + dir;
-      if (target < 0 || target >= next.length) return prev;
-      [next[index], next[target]] = [next[target], next[index]];
-      return next;
+      const from = prev.findIndex((b) => b.id === active.id);
+      const to = prev.findIndex((b) => b.id === over.id);
+      if (from === -1 || to === -1) return prev;
+      return arrayMove(prev, from, to);
     });
   }
 
@@ -147,6 +161,18 @@ export function PostEditor({
           </p>
         </div>
         <div className="flex gap-2">
+          {usesVideoFlow ? null : (
+            <button
+              type="button"
+              onClick={() => setPreviewing((v) => !v)}
+              className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-md px-4 text-sm font-extrabold shadow-soft ${
+                previewing ? "bg-fp-green text-white" : "border border-fp-line bg-white text-fp-ink"
+              }`}
+            >
+              {previewing ? <Pencil className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              {previewing ? "Edit" : "Preview"}
+            </button>
+          )}
           <form action={draftAction}>
             <HiddenFields
               description={description}
@@ -259,8 +285,7 @@ export function PostEditor({
         </div>
 
         {usesVideoFlow ? (
-          // Video posts replace the block editor with the video panel: a
-          // drop/URL zone that swaps to a player preview once a video loads.
+          // Video posts replace the block editor with the video panel.
           <VideoEditor
             videoUrl={videoUrl}
             cover={cover}
@@ -268,25 +293,68 @@ export function PostEditor({
             onVideoChange={setVideoUrl}
             onCoverChange={setCover}
           />
+        ) : previewing ? (
+          <PreviewPanel
+            title={title}
+            blocks={blocks}
+            description={description}
+            topicId={topicId}
+            topics={topics}
+          />
         ) : (
           <>
-            {/* Block list */}
-            <div className="mt-5 grid gap-3">
-              {blocks.map((block, index) => (
-                <BlockCard
-                  key={block.id}
-                  block={block}
-                  index={index}
-                  total={blocks.length}
-                  locked={isPublished}
-                  onChange={(patch) => update(block.id, patch)}
-                  onRemove={() => remove(block.id)}
-                  onMove={(dir) => move(index, dir)}
-                />
-              ))}
-            </div>
+            {/* Insert-at-start affordance */}
+            {isPublished ? null : (
+              <div className="mt-5 flex justify-center">
+                <details className="group/insert relative">
+                  <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 rounded-md border border-dashed border-fp-line bg-white/60 px-3 py-1.5 text-xs font-extrabold text-fp-muted hover:border-fp-green hover:text-fp-green">
+                    + Insert at top
+                  </summary>
+                  <div className="absolute left-1/2 z-40 mt-1 -translate-x-1/2">
+                    <BlockPalette variant="menu" onPick={(type) => insertAt(0, type)} />
+                  </div>
+                </details>
+              </div>
+            )}
 
-            {isPublished ? null : <BlockAdder onAdd={add} />}
+            {/* Drag-sortable block list */}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={blocks.map((b) => b.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="mt-3 grid gap-5">
+                  {blocks.map((block, index) => (
+                    <SortableBlock
+                      key={block.id}
+                      block={block}
+                      locked={isPublished}
+                      onRemove={() => remove(block.id)}
+                      onInsertAfter={(type) => insertAt(index + 1, type)}
+                    >
+                      <BlockBody
+                        block={block}
+                        readOnly={isPublished}
+                        onChange={(patch) => update(block.id, patch)}
+                      />
+                    </SortableBlock>
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+
+            {/* Floating footer toolbar (block palette) */}
+            {isPublished ? null : (
+              <div className="sticky bottom-4 z-20 mt-6">
+                <div className="rounded-lg border border-fp-line bg-white/95 p-3 shadow-card backdrop-blur">
+                  <BlockPalette variant="bar" onPick={append} />
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
@@ -411,6 +479,40 @@ export function PostEditor({
   );
 }
 
+/** Live preview using the same renderer as the public post page. */
+function PreviewPanel({
+  title,
+  blocks,
+  description,
+  topicId,
+  topics,
+}: {
+  title: string;
+  blocks: Block[];
+  description: string;
+  topicId: string;
+  topics: TopicOption[];
+}) {
+  const topicName = topics.find((t) => t.id === topicId)?.title ?? "Family Life";
+  return (
+    <div className="mt-5">
+      <p className="mb-2 text-xs font-extrabold uppercase tracking-wide text-fp-muted">
+        Live preview
+      </p>
+      <article className="rounded-lg border border-fp-line bg-white p-5 shadow-card sm:p-8">
+        <span className="inline-flex rounded-full bg-fp-mint px-3 py-1 text-xs font-extrabold uppercase text-fp-green">
+          {topicName}
+        </span>
+        <h1 className="mt-5 text-4xl font-bold leading-tight text-fp-ink">
+          {title || "Untitled post"}
+        </h1>
+        {/* Reuses the public renderer so preview matches the live page. */}
+        <PostBody blocks={blocks} excerpt={description} topicName={topicName} />
+      </article>
+    </div>
+  );
+}
+
 function HiddenFields({
   title,
   description,
@@ -484,111 +586,6 @@ function StatusPill({ status }: { status: "DRAFT" | "PUBLISHED" }) {
   );
 }
 
-function BlockAdder({ onAdd }: { onAdd: (type: BlockType) => void }) {
-  return (
-    <div className="mt-4 rounded-lg border border-dashed border-fp-line bg-white/60 p-3">
-      <p className="mb-2 px-1 text-xs font-extrabold uppercase tracking-wide text-fp-muted">
-        Add block
-      </p>
-      <div className="flex flex-wrap gap-2">
-        {(Object.keys(BLOCK_LABELS) as BlockType[]).map((type) => {
-          const Icon = BLOCK_ICONS[type];
-          return (
-            <button
-              key={type}
-              type="button"
-              onClick={() => onAdd(type)}
-              className="inline-flex items-center gap-1.5 rounded-md border border-fp-line bg-white px-3 py-2 text-sm font-bold text-fp-ink shadow-soft hover:border-fp-green hover:text-fp-green"
-            >
-              <Icon className="h-4 w-4" />
-              {BLOCK_LABELS[type]}
-              <Plus className="h-3.5 w-3.5 opacity-60" />
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function BlockCard({
-  block,
-  index,
-  total,
-  locked = false,
-  onChange,
-  onRemove,
-  onMove,
-}: {
-  block: Block;
-  index: number;
-  total: number;
-  locked?: boolean;
-  onChange: (patch: Partial<Block>) => void;
-  onRemove: () => void;
-  onMove: (dir: -1 | 1) => void;
-}) {
-  const Icon = BLOCK_ICONS[block.type];
-  return (
-    <div className="group rounded-lg border border-fp-line bg-white p-4 shadow-soft">
-      <div className="mb-3 flex items-center justify-between">
-        <span className="inline-flex items-center gap-2 text-xs font-extrabold uppercase tracking-wide text-fp-muted">
-          <GripVertical className="h-4 w-4" />
-          <Icon className="h-4 w-4" />
-          {BLOCK_LABELS[block.type]}
-        </span>
-        <div className="flex items-center gap-1">
-          <IconBtn label="Move up" disabled={locked || index === 0} onClick={() => onMove(-1)}>
-            <ArrowUp className="h-4 w-4" />
-          </IconBtn>
-          <IconBtn
-            label="Move down"
-            disabled={locked || index === total - 1}
-            onClick={() => onMove(1)}
-          >
-            <ArrowDown className="h-4 w-4" />
-          </IconBtn>
-          <IconBtn label="Delete block" disabled={locked} onClick={onRemove} danger>
-            <Trash2 className="h-4 w-4" />
-          </IconBtn>
-        </div>
-      </div>
-      <BlockBody block={block} readOnly={locked} onChange={onChange} />
-    </div>
-  );
-}
-
-function IconBtn({
-  children,
-  label,
-  onClick,
-  disabled,
-  danger,
-}: {
-  children: React.ReactNode;
-  label: string;
-  onClick: () => void;
-  disabled?: boolean;
-  danger?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      title={label}
-      onClick={onClick}
-      disabled={disabled}
-      className={`grid h-8 w-8 place-items-center rounded-md border border-fp-line bg-white text-fp-muted disabled:opacity-30 ${
-        danger
-          ? "hover:border-red-300 hover:text-red-600"
-          : "hover:border-fp-green hover:text-fp-green"
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
-
 const FIELD =
   "w-full rounded-md border border-fp-line bg-white px-3 py-2 text-sm font-semibold text-fp-ink outline-none focus:ring-4 focus:ring-fp-green/15";
 
@@ -606,7 +603,7 @@ function BlockBody({
       return (
         <div className="grid gap-2">
           <input
-            className={`${FIELD} text-base font-bold`}
+            className={`${FIELD} text-xl font-bold`}
             value={block.text}
             disabled={readOnly}
             onChange={(e) => onChange({ text: e.target.value })}
@@ -635,7 +632,7 @@ function BlockBody({
     case "paragraph":
       return (
         <textarea
-          className={`${FIELD} min-h-24 resize-y leading-6`}
+          className={`${FIELD} min-h-24 resize-y leading-7`}
           value={block.text}
           disabled={readOnly}
           onChange={(e) => onChange({ text: e.target.value })}
@@ -645,7 +642,7 @@ function BlockBody({
 
     case "quote":
       return (
-        <div className="grid gap-2">
+        <div className="grid gap-2 border-l-4 border-fp-green pl-3">
           <textarea
             className={`${FIELD} min-h-20 resize-y italic`}
             value={block.text}
@@ -667,40 +664,71 @@ function BlockBody({
       return <ListEditor block={block} readOnly={readOnly} onChange={onChange} />;
 
     case "image":
-      return (
-        <div className="grid gap-2">
-          <input
-            className={FIELD}
-            value={block.url}
-            disabled={readOnly}
-            onChange={(e) => onChange({ url: e.target.value })}
-            placeholder="Image URL (https://…)"
-          />
-          <input
-            className={FIELD}
-            value={block.alt ?? ""}
-            disabled={readOnly}
-            onChange={(e) => onChange({ alt: e.target.value })}
-            placeholder="Alt text (for accessibility)"
-          />
-          <input
-            className={FIELD}
-            value={block.caption ?? ""}
-            disabled={readOnly}
-            onChange={(e) => onChange({ caption: e.target.value })}
-            placeholder="Caption (optional)"
-          />
-          {block.url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={block.url}
-              alt={block.alt ?? ""}
-              className="mt-1 max-h-48 w-full rounded-md border border-fp-line object-cover"
-            />
-          ) : null}
-        </div>
-      );
+      return <ImageEditor block={block} readOnly={readOnly} onChange={onChange} />;
+
+    case "advert":
+      return <AdvertFields block={block} readOnly={readOnly} onChange={onChange} />;
   }
+}
+
+function ImageEditor({
+  block,
+  onChange,
+  readOnly = false,
+}: {
+  block: Extract<Block, { type: "image" }>;
+  onChange: (patch: Partial<Block>) => void;
+  readOnly?: boolean;
+}) {
+  const align = block.align ?? "center";
+  const width = block.width ?? "large";
+  return (
+    <div className="grid gap-2">
+      {block.url ? (
+        <div className="relative">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={block.url}
+            alt={block.alt ?? ""}
+            className="max-h-72 w-full rounded-md border border-fp-line object-contain"
+          />
+          {readOnly ? null : (
+            <div className="absolute left-1/2 top-2 -translate-x-1/2">
+              <ImageSettings
+                align={align as ImageAlign}
+                width={width as ImageWidth}
+                onChange={(patch) => onChange(patch)}
+              />
+            </div>
+          )}
+        </div>
+      ) : null}
+
+      {readOnly ? null : (
+        <MediaUploadField
+          accept="image/*"
+          kind="IMAGE"
+          label={block.url ? "Replace image" : "Upload or drop an image"}
+          onUploaded={(url) => onChange({ url })}
+        />
+      )}
+
+      <input
+        className={FIELD}
+        value={block.alt ?? ""}
+        disabled={readOnly}
+        onChange={(e) => onChange({ alt: e.target.value })}
+        placeholder="Alt text (for accessibility)"
+      />
+      <input
+        className={FIELD}
+        value={block.caption ?? ""}
+        disabled={readOnly}
+        onChange={(e) => onChange({ caption: e.target.value })}
+        placeholder="Caption (optional)"
+      />
+    </div>
+  );
 }
 
 function ListEditor({
@@ -758,9 +786,15 @@ function ListEditor({
             onChange={(e) => setItem(i, e.target.value)}
             placeholder={`Item ${i + 1}`}
           />
-          <IconBtn label="Remove item" disabled={readOnly} onClick={() => removeItem(i)} danger>
+          <button
+            type="button"
+            aria-label="Remove item"
+            disabled={readOnly}
+            onClick={() => removeItem(i)}
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-fp-line bg-white text-fp-muted hover:border-red-300 hover:text-red-600 disabled:opacity-30"
+          >
             <Trash2 className="h-4 w-4" />
-          </IconBtn>
+          </button>
         </div>
       ))}
       <button
@@ -769,7 +803,7 @@ function ListEditor({
         onClick={addItem}
         className="inline-flex w-fit items-center gap-1.5 rounded-md border border-fp-line bg-white px-3 py-1.5 text-xs font-extrabold text-fp-ink hover:border-fp-green hover:text-fp-green"
       >
-        <Plus className="h-3.5 w-3.5" /> Add item
+        + Add item
       </button>
     </div>
   );

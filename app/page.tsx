@@ -10,7 +10,6 @@ import { FeaturedArticles } from "@/components/featured-articles";
 import { HeroSliderCard } from "@/components/hero-slider-card";
 import { MediaGrid } from "@/components/media-grid";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
-import { NewsletterCard } from "@/components/newsletter-card";
 import { PopularPosts } from "@/components/popular-posts";
 import { QuickTopics } from "@/components/quick-topics";
 import { SiteFooter } from "@/components/site-footer";
@@ -50,10 +49,6 @@ export default async function FamilyPulseLanding() {
           <TrendingTopics topics={trendingTopics} />
 
           <CategoryBlogSections sections={topicSections} />
-
-          <section className="mt-4">
-            <NewsletterCard />
-          </section>
         </div>
 
         <aside className="hidden self-start 2xl:grid 2xl:grid-cols-2 gap-4">

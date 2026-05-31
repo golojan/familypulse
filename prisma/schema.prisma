@@ -48,6 +48,10 @@ model User {
   posts         Post[]
   mediaAssets   MediaAsset[]
 
+  /** Set when the reader subscribes (global newsletter opt-in). Subscribers see
+   * full post bodies; non-subscribers get the gated preview. */
+  subscribedAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
