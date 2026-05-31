@@ -72,19 +72,23 @@ function Field({ field, status }: { field: SettingField; status: SettingStatus }
         <StatusBadge status={status} />
       </div>
 
-      <input
-        id={field.key}
-        name={field.key}
-        type={field.secret ? "password" : "text"}
-        autoComplete="off"
-        placeholder={
-          field.secret && status.configured
-            ? "•••••••• (leave blank to keep current)"
-            : (field.placeholder ?? "")
-        }
-        defaultValue={field.secret ? "" : (status.displayValue ?? "")}
-        className="w-full rounded-md border border-fp-line bg-white px-4 py-2.5 text-sm font-semibold text-fp-ink outline-none focus:ring-4 focus:ring-fp-green/15"
-      />
+      {field.options ? (
+        <SelectField field={field} status={status} />
+      ) : (
+        <input
+          id={field.key}
+          name={field.key}
+          type={field.secret ? "password" : "text"}
+          autoComplete="off"
+          placeholder={
+            field.secret && status.configured
+              ? "•••••••• (leave blank to keep current)"
+              : (field.placeholder ?? "")
+          }
+          defaultValue={field.secret ? "" : (status.displayValue ?? "")}
+          className="w-full rounded-md border border-fp-line bg-white px-4 py-2.5 text-sm font-semibold text-fp-ink outline-none focus:ring-4 focus:ring-fp-green/15"
+        />
+      )}
 
       {field.secret && status.fromDatabase ? (
         <label className="flex items-center gap-2 text-xs font-bold text-fp-muted">
@@ -99,6 +103,34 @@ function Field({ field, status }: { field: SettingField; status: SettingStatus }
 
       {field.help ? <p className="text-xs font-semibold text-fp-muted">{field.help}</p> : null}
     </div>
+  );
+}
+
+function SelectField({ field, status }: { field: SettingField; status: SettingStatus }) {
+  const options = field.options ?? [];
+  const stored = status.displayValue ?? "";
+  // If a previously-stored value isn't one of the known options (e.g. an admin
+  // typed a custom model before), keep it as an extra choice so we never silently
+  // overwrite it when the select renders.
+  const hasStored = options.some((o) => o.value === stored);
+  // Prefer the stored value (kept as an extra option below if it's non-standard);
+  // otherwise fall back to the first option, which is the default.
+  const selected = stored || (options[0]?.value ?? "");
+
+  return (
+    <select
+      id={field.key}
+      name={field.key}
+      defaultValue={selected}
+      className="w-full rounded-md border border-fp-line bg-white px-4 py-2.5 text-sm font-semibold text-fp-ink outline-none focus:ring-4 focus:ring-fp-green/15"
+    >
+      {!hasStored && stored ? <option value={stored}>{stored} (current)</option> : null}
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
   );
 }
 

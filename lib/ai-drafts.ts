@@ -26,10 +26,12 @@ import {
  */
 
 export type AiProvider = "anthropic" | "deepseek";
+export type ImageProvider = "openai" | "gemini";
 
 const DEFAULT_ANTHROPIC_MODEL = "claude-opus-4-8";
 const DEFAULT_DEEPSEEK_MODEL = "deepseek-chat";
 const DEFAULT_OPENAI_IMAGE_MODEL = "gpt-image-1";
+const DEFAULT_GEMINI_IMAGE_MODEL = "gemini-2.5-flash-image";
 const DEFAULT_INTERVAL_MINUTES = 60;
 const DEFAULT_PER_RUN = 1;
 const MAX_PER_RUN = 5;
@@ -46,11 +48,15 @@ export type DraftConfig = {
   topicSlug: string | null;
   model: string;
   apiKey: string | undefined;
-  /** Cover image generation (OpenAI). Independent of the text provider. */
+  /** Cover image generation. Independent of the text provider. */
   coverImages: boolean;
+  /** Which service generates cover images: OpenAI or Google Gemini. */
+  imageProvider: ImageProvider;
   openaiApiKey: string | undefined;
   openaiImageModel: string;
   openaiImageQuality: ImageQuality;
+  geminiApiKey: string | undefined;
+  geminiImageModel: string;
 };
 
 /** Resolve and normalize the AI draft settings from the database/env. */
@@ -85,10 +91,19 @@ export async function getDraftConfig(): Promise<DraftConfig> {
     model,
     apiKey,
     coverImages: (s.AI_DRAFTS_COVER_IMAGES ?? "").trim().toLowerCase() === "true",
+    imageProvider:
+      (s.AI_DRAFTS_IMAGE_PROVIDER ?? "").trim().toLowerCase() === "gemini" ? "gemini" : "openai",
     openaiApiKey: s.OPENAI_API_KEY,
     openaiImageModel: normalizeImageModel(s.OPENAI_IMAGE_MODEL),
     openaiImageQuality: parseImageQuality(s.OPENAI_IMAGE_QUALITY),
+    geminiApiKey: s.GEMINI_API_KEY,
+    geminiImageModel: normalizeImageModel(s.GEMINI_IMAGE_MODEL, DEFAULT_GEMINI_IMAGE_MODEL),
   };
+}
+
+/** Whether the configured image provider has an API key set. */
+function hasImageProviderKey(config: DraftConfig): boolean {
+  return config.imageProvider === "gemini" ? !!config.geminiApiKey : !!config.openaiApiKey;
 }
 
 /**
@@ -98,13 +113,16 @@ export async function getDraftConfig(): Promise<DraftConfig> {
  * "model does not exist" and silently disables cover images. We repair that
  * class of typo here and fall back to the default when blank.
  */
-function normalizeImageModel(raw: string | undefined): string {
+function normalizeImageModel(
+  raw: string | undefined,
+  fallback: string = DEFAULT_OPENAI_IMAGE_MODEL,
+): string {
   const cleaned = (raw ?? "")
     .normalize("NFKC")
     .replace(/[‐-―−]/g, "-") // any unicode dash → ASCII hyphen
     .trim()
     .toLowerCase();
-  return cleaned || DEFAULT_OPENAI_IMAGE_MODEL;
+  return cleaned || fallback;
 }
 
 /** Normalize the configured image quality, defaulting to medium for unknown values. */
@@ -321,7 +339,7 @@ async function runGeneration(config: DraftConfig): Promise<RunResult> {
 
       // Cover image is best-effort: a failure here must not lose the article.
       let coverImage: string | null = null;
-      if (config.coverImages && config.openaiApiKey) {
+      if (config.coverImages && hasImageProviderKey(config)) {
         try {
           coverImage = await generateCoverImage(config, topic, title, authorId, regions[index]);
         } catch (err) {
@@ -728,27 +746,18 @@ function buildCoverPrompt(
     .join(" ");
 }
 
-/**
- * Generate a cover image for the draft with OpenAI's image API, upload it to
- * Spaces, register it as a MediaAsset, and return its public URL. Throws on any
- * failure so the caller can record it without losing the article.
- */
-async function generateCoverImage(
-  config: DraftConfig,
-  topic: TopicSeed,
-  title: string,
-  authorId: string,
-  region?: (typeof STORY_REGIONS)[number],
-): Promise<string> {
-  const prompt = buildCoverPrompt(topic, title, region);
+type GeneratedImage = { body: Buffer; contentType: string };
 
+/** Generate image bytes with OpenAI's image API. */
+async function generateOpenAiImage(config: DraftConfig, prompt: string): Promise<GeneratedImage> {
+  if (!config.openaiApiKey) throw new Error("No OpenAI API key configured.");
   const res = await fetchWithTimeout(
     "https://api.openai.com/v1/images/generations",
     {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        authorization: `Bearer ${config.openaiApiKey as string}`,
+        authorization: `Bearer ${config.openaiApiKey}`,
       },
       body: JSON.stringify({
         model: config.openaiImageModel,
@@ -767,19 +776,88 @@ async function generateCoverImage(
   const data = (await res.json()) as { data?: Array<{ b64_json?: string; url?: string }> };
   const item = data.data?.[0];
 
-  let body: Buffer;
-  let contentType = "image/png";
   if (item?.b64_json) {
-    body = Buffer.from(item.b64_json, "base64");
-  } else if (item?.url) {
+    return { body: Buffer.from(item.b64_json, "base64"), contentType: "image/png" };
+  }
+  if (item?.url) {
     // Some configurations return a URL instead of inline base64.
     const img = await fetchWithTimeout(item.url, {}, 30_000, "image download");
     if (!img.ok) throw new Error(`fetching generated image failed (${img.status})`);
-    contentType = img.headers.get("content-type") ?? "image/png";
-    body = Buffer.from(await img.arrayBuffer());
-  } else {
-    throw new Error("OpenAI returned no image data");
+    return {
+      body: Buffer.from(await img.arrayBuffer()),
+      contentType: img.headers.get("content-type") ?? "image/png",
+    };
   }
+  throw new Error("OpenAI returned no image data");
+}
+
+/**
+ * Generate image bytes with Google Gemini's image model via the Generative
+ * Language API (generateContent). The image comes back as inline base64 data in
+ * the first candidate's parts; we return the first inline image part.
+ */
+async function generateGeminiImage(config: DraftConfig, prompt: string): Promise<GeneratedImage> {
+  if (!config.geminiApiKey) throw new Error("No Gemini API key configured.");
+  const model = config.geminiImageModel;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
+    model,
+  )}:generateContent`;
+
+  const res = await fetchWithTimeout(
+    url,
+    {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-goog-api-key": config.geminiApiKey,
+      },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: { responseModalities: ["IMAGE", "TEXT"] },
+      }),
+    },
+    IMAGE_TIMEOUT_MS,
+    "Gemini image",
+  );
+  if (!res.ok) {
+    throw new Error(`Gemini image ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  }
+
+  const data = (await res.json()) as {
+    candidates?: Array<{
+      content?: { parts?: Array<{ inlineData?: { mimeType?: string; data?: string } }> };
+    }>;
+  };
+  const parts = data.candidates?.[0]?.content?.parts ?? [];
+  const inline = parts.find((p) => p.inlineData?.data)?.inlineData;
+  if (!inline?.data) {
+    throw new Error("Gemini returned no image data");
+  }
+  return {
+    body: Buffer.from(inline.data, "base64"),
+    contentType: inline.mimeType ?? "image/png",
+  };
+}
+
+/**
+ * Generate a cover image for the draft, upload it to Spaces, register it as a
+ * MediaAsset, and return its public URL. The pixels come from the configured
+ * image provider (OpenAI or Google Gemini); upload + registration are shared.
+ * Throws on any failure so the caller can record it without losing the article.
+ */
+async function generateCoverImage(
+  config: DraftConfig,
+  topic: TopicSeed,
+  title: string,
+  authorId: string,
+  region?: (typeof STORY_REGIONS)[number],
+): Promise<string> {
+  const prompt = buildCoverPrompt(topic, title, region);
+
+  const { body, contentType } =
+    config.imageProvider === "gemini"
+      ? await generateGeminiImage(config, prompt)
+      : await generateOpenAiImage(config, prompt);
 
   const uploaded = await uploadGeneratedImage({ body, contentType, prefix: "ai-drafts/covers" });
 
@@ -817,7 +895,13 @@ export async function generateCoverForPost(
 ): Promise<string> {
   const config = await getDraftConfig();
   if (!config.coverImages) throw new Error("Cover image generation is disabled in settings.");
-  if (!config.openaiApiKey) throw new Error("No OpenAI API key configured.");
+  if (!hasImageProviderKey(config)) {
+    throw new Error(
+      config.imageProvider === "gemini"
+        ? "No Gemini API key configured."
+        : "No OpenAI API key configured.",
+    );
+  }
   // generateCoverImage reads title + slug + description from the topic.
   const seed: TopicSeed = {
     id: "",

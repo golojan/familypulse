@@ -21,8 +21,13 @@ export type SettingKey =
   | "OPENAI_API_KEY"
   | "OPENAI_IMAGE_MODEL"
   | "OPENAI_IMAGE_QUALITY"
+  | "AI_DRAFTS_IMAGE_PROVIDER"
+  | "GEMINI_API_KEY"
+  | "GEMINI_IMAGE_MODEL"
   | "AI_DRAFTS_COVER_IMAGES"
   | "CRON_SECRET";
+
+export type SettingOption = { value: string; label: string };
 
 export type SettingField = {
   key: SettingKey;
@@ -30,6 +35,9 @@ export type SettingField = {
   secret: boolean;
   placeholder?: string;
   help?: string;
+  /** When set, the field renders as a <select> with these choices instead of a
+   * free-text input. The first option is treated as the default/blank value. */
+  options?: SettingOption[];
 };
 
 export type SettingGroup = {
@@ -108,15 +116,21 @@ export const SETTING_GROUPS: SettingGroup[] = [
         key: "AI_DRAFTS_ENABLED",
         label: "Enabled",
         secret: false,
-        placeholder: "true",
-        help: 'Set to "true" to let the scheduled job run. Any other value (or blank) keeps it off.',
+        options: [
+          { value: "false", label: "Off" },
+          { value: "true", label: "On" },
+        ],
+        help: "When On, the scheduled job may run (subject to the interval below).",
       },
       {
         key: "AI_DRAFTS_PROVIDER",
         label: "Text Provider",
         secret: false,
-        placeholder: "anthropic",
-        help: 'Which model writes the article: "anthropic" or "deepseek". Cover images always use OpenAI.',
+        options: [
+          { value: "anthropic", label: "Anthropic (Claude)" },
+          { value: "deepseek", label: "DeepSeek" },
+        ],
+        help: "Which service writes the article. Cover images use the image provider selected below.",
       },
       {
         key: "AI_DRAFTS_INTERVAL_MINUTES",
@@ -149,38 +163,79 @@ export const SETTING_GROUPS: SettingGroup[] = [
         key: "ANTHROPIC_MODEL",
         label: "Anthropic Model",
         secret: false,
-        placeholder: "claude-opus-4-8",
-        help: "Defaults to claude-opus-4-8 when blank.",
+        options: [
+          { value: "", label: "Default (claude-opus-4-8)" },
+          { value: "claude-opus-4-8", label: "Claude Opus 4.8" },
+          { value: "claude-sonnet-4-6", label: "Claude Sonnet 4.6" },
+          { value: "claude-haiku-4-5-20251001", label: "Claude Haiku 4.5" },
+        ],
+        help: "Used when the text provider is Anthropic.",
       },
       { key: "DEEPSEEK_API_KEY", label: "DeepSeek API Key", secret: true, placeholder: "sk-..." },
       {
         key: "DEEPSEEK_MODEL",
         label: "DeepSeek Model",
         secret: false,
-        placeholder: "deepseek-chat",
-        help: "Defaults to deepseek-chat when blank.",
+        options: [
+          { value: "", label: "Default (deepseek-chat)" },
+          { value: "deepseek-chat", label: "deepseek-chat (V3)" },
+          { value: "deepseek-reasoner", label: "deepseek-reasoner (R1)" },
+        ],
+        help: "Used when the text provider is DeepSeek. (DeepSeek is text-only — it cannot generate images.)",
       },
       {
         key: "AI_DRAFTS_COVER_IMAGES",
         label: "Generate cover images",
         secret: false,
-        placeholder: "true",
-        help: 'Set to "true" to generate a cover image for each draft with OpenAI. Requires an OpenAI key.',
+        options: [
+          { value: "false", label: "Off" },
+          { value: "true", label: "On" },
+        ],
+        help: "When On, each draft gets an AI cover image. Requires a key for the selected image provider.",
+      },
+      {
+        key: "AI_DRAFTS_IMAGE_PROVIDER",
+        label: "Image Provider",
+        secret: false,
+        options: [
+          { value: "openai", label: "OpenAI" },
+          { value: "gemini", label: "Google Gemini" },
+        ],
+        help: "Which service generates cover images. (DeepSeek is not available — it has no image API.)",
       },
       { key: "OPENAI_API_KEY", label: "OpenAI API Key", secret: true, placeholder: "sk-..." },
       {
         key: "OPENAI_IMAGE_MODEL",
         label: "OpenAI Image Model",
         secret: false,
-        placeholder: "gpt-image-1",
-        help: "OpenAI's latest image model. Defaults to gpt-image-1 (photorealistic) when blank.",
+        options: [
+          { value: "", label: "Default (gpt-image-1)" },
+          { value: "gpt-image-1", label: "gpt-image-1 (photorealistic)" },
+        ],
+        help: "Used when the image provider is OpenAI.",
       },
       {
         key: "OPENAI_IMAGE_QUALITY",
         label: "OpenAI Image Quality",
         secret: false,
-        placeholder: "medium",
-        help: "Cover image quality: low, medium, high, or auto. Higher = more detail but slower and pricier. Defaults to medium.",
+        options: [
+          { value: "medium", label: "Medium (default)" },
+          { value: "low", label: "Low (fastest, cheapest)" },
+          { value: "high", label: "High (most detail, slower)" },
+          { value: "auto", label: "Auto" },
+        ],
+        help: "Higher quality = more detail but slower and pricier.",
+      },
+      { key: "GEMINI_API_KEY", label: "Gemini API Key", secret: true, placeholder: "AIza..." },
+      {
+        key: "GEMINI_IMAGE_MODEL",
+        label: "Gemini Image Model",
+        secret: false,
+        options: [
+          { value: "", label: "Default (gemini-2.5-flash-image)" },
+          { value: "gemini-2.5-flash-image", label: "gemini-2.5-flash-image (Nano Banana)" },
+        ],
+        help: "Used when the image provider is Google Gemini.",
       },
     ],
   },

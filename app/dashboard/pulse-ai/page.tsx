@@ -40,6 +40,9 @@ export default async function PulseAiPage() {
     take: 5,
   });
   const hasKey = Boolean(config.apiKey);
+  const imageProviderLabel = config.imageProvider === "gemini" ? "Gemini" : "OpenAI";
+  const imageKeyPresent =
+    config.imageProvider === "gemini" ? Boolean(config.geminiApiKey) : Boolean(config.openaiApiKey);
 
   return (
     <main className="px-4 py-8 sm:px-6 lg:px-10">
@@ -75,13 +78,15 @@ export default async function PulseAiPage() {
             <ConfigRow label="Topic" ok value={config.topicSlug ?? "Rotating across all topics"} />
             <ConfigRow
               label="Cover images"
-              ok={!config.coverImages || Boolean(config.openaiApiKey)}
+              ok={!config.coverImages || imageKeyPresent}
               value={
                 !config.coverImages
                   ? "Off"
-                  : config.openaiApiKey
-                    ? `On · ${config.openaiImageModel} · ${config.openaiImageQuality}`
-                    : "On · no OpenAI key"
+                  : !imageKeyPresent
+                    ? `On · no ${imageProviderLabel} key`
+                    : config.imageProvider === "gemini"
+                      ? `On · Gemini · ${config.geminiImageModel}`
+                      : `On · OpenAI · ${config.openaiImageModel} · ${config.openaiImageQuality}`
               }
             />
           </dl>
