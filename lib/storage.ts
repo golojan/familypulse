@@ -8,8 +8,12 @@ import { getSettings } from "@/lib/settings";
  * DigitalOcean Spaces (S3-compatible) client + presigned PUT URL helper.
  *
  * Browser uploads directly to Spaces using the signed URL — the server only
- * signs, never streams the bytes. Configuration is resolved from site settings
- * (database values, falling back to the matching DO_SPACES_* env vars):
+ * signs, never streams the bytes. Objects are made publicly readable by the
+ * Space's bucket policy (PublicReadGetObject), NOT by a per-object ACL, so the
+ * presigned PUTs intentionally do not sign an `x-amz-acl` header (the browser
+ * sends only Content-Type, and a signed-but-unsent ACL silently stores the
+ * object private). Configuration is resolved from site settings (database
+ * values, falling back to the matching DO_SPACES_* env vars):
  *   DO_SPACES_REGION         (e.g. fra1)
  *   DO_SPACES_ENDPOINT       (origin URL)
  *   DO_SPACES_BUCKET
@@ -189,7 +193,9 @@ export async function presignAvatarUpload(opts: {
     Key: key,
     ContentType: opts.contentType,
     ContentLength: opts.size,
-    ACL: "public-read",
+    // Objects are served publicly via the Space's bucket policy, so we do NOT
+    // sign an ACL header here: the browser PUTs with only Content-Type, and a
+    // signed `x-amz-acl` it doesn't replay would make the object upload private.
     CacheControl: "public, max-age=31536000, immutable",
   });
 
@@ -234,7 +240,9 @@ export async function presignGroupLogoUpload(opts: {
     Key: key,
     ContentType: opts.contentType,
     ContentLength: opts.size,
-    ACL: "public-read",
+    // Objects are served publicly via the Space's bucket policy, so we do NOT
+    // sign an ACL header here: the browser PUTs with only Content-Type, and a
+    // signed `x-amz-acl` it doesn't replay would make the object upload private.
     CacheControl: "public, max-age=31536000, immutable",
   });
 
@@ -275,7 +283,9 @@ export async function presignArticleMediaUpload(opts: {
     Key: key,
     ContentType: opts.contentType,
     ContentLength: opts.size,
-    ACL: "public-read",
+    // Objects are served publicly via the Space's bucket policy, so we do NOT
+    // sign an ACL header here: the browser PUTs with only Content-Type, and a
+    // signed `x-amz-acl` it doesn't replay would make the object upload private.
     CacheControl: "public, max-age=31536000, immutable",
   });
 
@@ -315,7 +325,9 @@ export async function presignMediaLibraryUpload(opts: {
     Key: key,
     ContentType: opts.contentType,
     ContentLength: opts.size,
-    ACL: "public-read",
+    // Objects are served publicly via the Space's bucket policy, so we do NOT
+    // sign an ACL header here: the browser PUTs with only Content-Type, and a
+    // signed `x-amz-acl` it doesn't replay would make the object upload private.
     CacheControl: "public, max-age=31536000, immutable",
   });
 
@@ -412,7 +424,9 @@ export async function presignCampaignMediaUpload(opts: {
     Key: key,
     ContentType: opts.contentType,
     ContentLength: opts.size,
-    ACL: "public-read",
+    // Objects are served publicly via the Space's bucket policy, so we do NOT
+    // sign an ACL header here: the browser PUTs with only Content-Type, and a
+    // signed `x-amz-acl` it doesn't replay would make the object upload private.
     CacheControl: "public, max-age=31536000, immutable",
   });
 
@@ -458,7 +472,9 @@ export async function presignGroupMessageMediaUpload(opts: {
     Key: key,
     ContentType: opts.contentType,
     ContentLength: opts.size,
-    ACL: "public-read",
+    // Objects are served publicly via the Space's bucket policy, so we do NOT
+    // sign an ACL header here: the browser PUTs with only Content-Type, and a
+    // signed `x-amz-acl` it doesn't replay would make the object upload private.
     CacheControl: "public, max-age=31536000, immutable",
   });
 
