@@ -605,6 +605,34 @@ async function generateCoverImage(
   return uploaded.publicUrl;
 }
 
+/** Minimal topic info needed to generate a cover for an existing post. */
+export type CoverTopic = { title: string; slug: string };
+
+/**
+ * Public entry point for generating a cover image for an existing post (used by
+ * the post audit). Resolves the live config, requires cover images enabled and
+ * an OpenAI key, and returns the uploaded public URL. Throws on any failure so
+ * the caller can record it.
+ */
+export async function generateCoverForPost(
+  topic: CoverTopic,
+  title: string,
+  authorId: string,
+): Promise<string> {
+  const config = await getDraftConfig();
+  if (!config.coverImages) throw new Error("Cover image generation is disabled in settings.");
+  if (!config.openaiApiKey) throw new Error("No OpenAI API key configured.");
+  // generateCoverImage only reads title + slug from the topic.
+  const seed: TopicSeed = {
+    id: "",
+    title: topic.title,
+    slug: topic.slug,
+    description: null,
+    writerPrompt: null,
+  };
+  return generateCoverImage(config, seed, title, authorId);
+}
+
 /**
  * Parse the model's text into a GeneratedPost. Models sometimes wrap JSON in
  * ```json fences or add prose; we extract the first balanced JSON object.

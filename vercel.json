@@ -6,6 +6,10 @@
     {
       "path": "/api/cron/generate-drafts",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/audit",
+      "schedule": "0 */6 * * *"
     }
   ]
 }

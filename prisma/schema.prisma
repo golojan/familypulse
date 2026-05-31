@@ -82,6 +82,9 @@ model Post {
   blocks      Json       @default("[]")
   status      PostStatus @default(DRAFT)
   publishedAt DateTime?
+  /// When the automated audit (see app/api/cron/audit) last checked this post.
+  /// Null means never audited; the audit processes the least-recently-audited first.
+  lastAuditedAt DateTime?
 
   authorId String
   author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
