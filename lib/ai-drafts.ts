@@ -188,10 +188,10 @@ async function pickTopics(topicSlug: string | null, count: number): Promise<Topi
 }
 
 /**
- * Regions the family stories cycle through, so coverage is globally balanced
- * rather than defaulting to one culture. Each entry pairs a region label with a
- * light setting hint the model can use to ground the story authentically and
- * respectfully (names, foods, settings) without stereotyping.
+ * Regions the articles cycle through, so coverage is globally balanced rather
+ * than defaulting to one country. Each entry pairs a region label with a light
+ * hint the model can use to foreground real evidence, data, policy, or examples
+ * from that region authentically and respectfully (never stereotyped).
  */
 const STORY_REGIONS: ReadonlyArray<{ region: string; hint: string }> = [
   { region: "Africa", hint: "e.g. Nigeria, Kenya, Ghana, or South Africa" },
@@ -376,16 +376,18 @@ function buildPrompt(
   region: (typeof STORY_REGIONS)[number],
 ): { system: string; user: string } {
   const system = [
-    "You are an editorial writer for FamilyPulse, a warm, practical publication about family life, parenting, relationships, and wellbeing.",
+    "You are an editorial writer for FamilyPulse, an evidence-based publication about family life, parenting, relationships, and wellbeing.",
     "Write an original, publish-ready article — not an outline or a draft to be finished later. It should read as a complete, polished piece a human editor could publish with only a quick review.",
     "",
-    "STORYTELLING PATTERN (required): Every article MUST open with a heart-touching, engaging, true-to-life family story or vignette that is directly relevant to the topic. Open the very first paragraph in the middle of a relatable, emotionally resonant family moment — give the people first names and a specific, vivid situation (a parent at bedtime, a couple after a hard day, a child's small breakthrough). Make the reader feel something. Then build the entire article on that story: refer back to those same characters and that moment as you draw out lessons, so the practical advice feels grounded in real life rather than abstract. Close by returning to the family from the opening to show hope or change.",
-    "The story must be illustrative and realistic but fictional/composite — do not claim it is a specific real named person or a true news event.",
-    `GLOBAL BALANCE (required): Set this article's family story in ${region.region} (${region.hint}). Use names, foods, settings, and cultural details that fit that region naturally and respectfully — authentic, never stereotyped or caricatured. The practical advice itself stays universal and applies to all families; only the story's setting and characters reflect the region.`,
+    "VOICE (required): Write in an instructive, analytical, journalistic third person. Do NOT use the first person ('I', 'me', 'my', 'we', 'our') and do NOT invent a fictional family or named characters as the narrative spine. Address the reader directly only sparingly ('you', 'parents', 'families'). The piece should read like a well-researched explainer from a serious family-and-education publication, not a personal essay or a made-up vignette.",
+    "",
+    "EVIDENCE (required): Ground claims in real, verifiable evidence — peer-reviewed research, longitudinal studies, official statistics, and reputable institutions. Reference credible bodies and sources by name where relevant, such as the Education Endowment Foundation (EEF), the Education Research and Information Centre / ERIC (eric.org.uk and eric.ed.gov), UNICEF, the WHO, the OECD, the CDC, the UK Office for National Statistics, the American Academy of Pediatrics, and similar. Cite specific, plausible findings and data points (e.g. 'a 2019 OECD analysis found…', 'longitudinal research summarised by the EEF suggests…'). Only attribute findings to real organisations; never fabricate a study title, DOI, or a direct quotation from a named individual. When you are summarising the general direction of research rather than a single named study, say so honestly ('research consistently indicates…').",
+    "",
+    `GLOBAL INSIGHTS (required): Draw on globally balanced data and real-world examples. For this article, foreground evidence, statistics, policy, or practice from ${region.region} (${region.hint}) alongside universal guidance — for example a national programme, a published study, or recorded outcomes from that region — so coverage reflects families worldwide rather than defaulting to one country. The practical guidance stays universal and applies to all families.`,
     "",
     "Length & pacing: a 3–5 minute read, roughly 700–1100 words. Use 8–14 blocks total.",
-    "Structure: a compelling title; an opening of 1–2 paragraphs telling the family story (no heading before it); then 3–5 H2 subheadings (level 2) that each draw a lesson from that story, each followed by 1–3 short paragraphs (3–4 sentences each) that reference the same characters/moment; at least one list (bullet or numbered) of practical, specific tips; optionally one short quote; and a final paragraph that returns to the opening family and ends with a clear, encouraging call to action for the reader.",
-    "Quality: be specific, concrete, and genuinely useful — real examples and actionable steps, not platitudes. Maintain a warm, conversational, trustworthy, emotionally honest tone. Proofread for grammar and clarity. Avoid clichés, filler, keyword stuffing, and any medical, legal, or financial claims; speak in general supportive terms instead.",
+    "Structure: a clear, descriptive, non-clickbait title; an opening of 1–2 paragraphs that frame the question or problem with a concrete data point, recorded trend, or research finding (no heading before it); then 3–5 H2 subheadings (level 2), each followed by 1–3 short paragraphs (3–4 sentences each) that explain the evidence and what it means in practice; at least one list (bullet or numbered) of specific, actionable, evidence-informed steps; optionally one short quote attributed to a real organisation or a clearly general statement of consensus; and a final paragraph summarising the takeaways with a clear, practical call to action.",
+    "Quality: be specific, concrete, and genuinely useful — cite figures, name sources, and give actionable steps, not platitudes. Maintain an authoritative, clear, trustworthy, analytical tone. Proofread for grammar and clarity. Avoid clichés, filler, keyword stuffing, and any prescriptive medical, legal, or financial advice; frame health, legal, and financial points as general, evidence-based information and signpost professional support where appropriate.",
     "",
     "Return ONLY a JSON object — no markdown fences, no commentary — matching exactly this TypeScript shape:",
     '{ "title": string, "blocks": Block[] }',
@@ -402,8 +404,9 @@ function buildPrompt(
     topic.description ? `Topic description: ${topic.description}` : "",
     topic.writerPrompt ? `Editorial guidance: ${topic.writerPrompt}` : "",
     "Write one fresh, complete, publish-ready article for this topic now.",
-    "Open with a heart-touching, true-to-life family story relevant to this topic, then build the whole article on that story.",
-    `Set the family story in ${region.region}, with authentic, respectful regional detail.`,
+    "Use an instructive, analytical third-person voice (no first person, no invented family characters).",
+    "Ground it in real, verifiable evidence — cite reputable organisations and research (e.g. EEF, ERIC / eric.org.uk, UNICEF, WHO, OECD, CDC, AAP) and real data points; never fabricate study titles or quotations.",
+    `Foreground globally balanced insights, including relevant evidence or examples from ${region.region}.`,
   ]
     .filter(Boolean)
     .join("\n");

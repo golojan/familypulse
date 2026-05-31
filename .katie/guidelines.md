@@ -4,15 +4,16 @@
 
 This document provides guidelines and best practices for formatting posts within the platform. Adhering to these guidelines will ensure that posts are clear, engaging, and accessible to a wide audience.
 
-## Storytelling Pattern (core)
+## Editorial Voice & Evidence (core)
 
-Every FamilyPulse blog post **must open with a heart-touching, engaging, true-to-life family story** that is directly relevant to the topic, and then build its whole message on that story.
+FamilyPulse is an **evidence-based** publication. Every post must read like a well-researched, instructive explainer from a serious family-and-education outlet — analytical and authoritative, **not** a personal essay or a made-up story.
 
-- **Open in a moment.** Start the first paragraph in the middle of a relatable, emotionally resonant family scene — give the people first names and a specific, vivid situation (a parent at bedtime, a couple after a hard day, a child's small breakthrough). The goal is to make the reader feel something before any advice appears. Do not put a heading before this opening.
-- **Build on the story.** Each subsequent section should draw a lesson from that same story, referring back to the same characters and moment so the practical guidance feels grounded in real life rather than abstract.
-- **Close the loop.** End by returning to the family from the opening to show hope, growth, or change, then give a clear, encouraging call to action.
-- **Keep it honest.** Stories should be realistic and emotionally true, but illustrative/composite — do not present them as a specific real named person or a true news event.
-- **Cycle regions for global balance.** Rotate the story's setting across world regions — Africa, Asia, Europe, North America, South America, the Middle East, Oceania — so the library reflects families everywhere rather than defaulting to one culture. Use names, foods, and settings that fit the chosen region authentically and respectfully (never stereotyped). The practical advice stays universal; only the story's setting and characters reflect the region. Generated posts cycle through these regions automatically.
+- **Instructive, analytical third person.** Do **not** use the first person ("I", "me", "my", "we", "our") and do **not** build the article around a fictional family or named characters. Address the reader directly only sparingly ("you", "parents", "families"). The aim is clarity and authority, not personalisation.
+- **Open with the evidence, not a vignette.** Frame the question or problem in the first 1–2 paragraphs with a concrete data point, recorded trend, or research finding — no invented scene, no heading before it.
+- **Cite real, verifiable sources.** Ground claims in peer-reviewed research, longitudinal studies, official statistics, and reputable institutions. Reference credible bodies by name where relevant — for example the Education Endowment Foundation (EEF), the Education Research and Information Centre / ERIC ([eric.org.uk](https://eric.org.uk), [eric.ed.gov](https://eric.ed.gov)), UNICEF, the WHO, the OECD, the CDC, the UK Office for National Statistics, and the American Academy of Pediatrics. Cite specific, plausible findings and figures.
+- **Never fabricate.** Only attribute findings to real organisations. Do not invent a study title, DOI, author, or a direct quotation from a named individual. When summarising the general direction of research rather than a single named study, say so honestly ("research consistently indicates…").
+- **Use global, world-recorded data.** Draw on globally balanced statistics, policy, and real-world examples. Rotate emphasis across world regions — Africa, Asia, Europe, North America, South America, the Middle East, Oceania — foregrounding evidence, programmes, or recorded outcomes from each so coverage reflects families worldwide rather than defaulting to one country. The practical guidance stays universal; only the foregrounded evidence and examples shift by region. Generated posts cycle through these regions automatically.
+- **End with takeaways and a practical call to action.** Close by summarising the key, evidence-informed points and pointing the reader to a concrete next step. Signpost professional support for medical, legal, or financial matters rather than giving prescriptive advice.
 
 ## Validation and Moderation
 
