@@ -471,6 +471,65 @@ async function callDeepSeek(config: DraftConfig, system: string, user: string): 
 }
 
 /**
+ * Safe, generic family-lifestyle scenes keyed by topic slug. We deliberately do
+ * NOT feed the article title or raw topic text into the image prompt: titles can
+ * be charged or sensitive (politics, discipline, mental health), which trips the
+ * image provider's content policy. Instead each topic maps to a wholesome,
+ * neutral, publishable scene. Unknown topics fall back to a generic family scene.
+ */
+// Ordered keyword → scene rules. The first rule whose keyword appears in the
+// topic slug wins, so parent slugs and their subtopics (e.g. "parenting-and-
+// discipline-teen-independence") all resolve to the right wholesome scene.
+const COVER_SCENE_RULES: ReadonlyArray<[keyword: string, scene: string]> = [
+  [
+    "communication",
+    "a cheerful family sitting together in a bright living room, smiling and chatting",
+  ],
+  [
+    "parenting",
+    "a warm, supportive parent and child reading a book together at a cozy kitchen table",
+  ],
+  [
+    "discipline",
+    "a warm, supportive parent and child reading a book together at a cozy kitchen table",
+  ],
+  ["marriage", "a happy adult couple laughing together while cooking in a sunny kitchen"],
+  ["relationship", "a happy adult couple laughing together while cooking in a sunny kitchen"],
+  ["work-life", "a relaxed parent enjoying coffee at a tidy home desk by a window with plants"],
+  [
+    "child-development",
+    "a joyful family playing with building blocks together on a living-room rug",
+  ],
+  [
+    "mental-wellness",
+    "a calm person relaxing peacefully with a cup of tea by a sunlit window with houseplants",
+  ],
+  ["family-activities", "a happy family enjoying a picnic together in a green park on a sunny day"],
+  ["faith", "a peaceful family sharing a warm meal together around a dining table"],
+  ["values", "a peaceful family sharing a warm meal together around a dining table"],
+];
+
+const DEFAULT_COVER_SCENE = "a happy, wholesome family spending warm, joyful time together at home";
+
+/**
+ * Build a policy-safe cover-image prompt for a topic. The scene is chosen from
+ * the curated keyword rules above (never the article title or raw topic text);
+ * we add wholesome/safe guardrails and explicitly forbid unsafe or sensitive
+ * content so generation isn't blocked by the provider.
+ */
+function buildCoverPrompt(topic: TopicSeed): string {
+  const slug = topic.slug.toLowerCase();
+  const scene =
+    COVER_SCENE_RULES.find(([keyword]) => slug.includes(keyword))?.[1] ?? DEFAULT_COVER_SCENE;
+  return [
+    `A photorealistic, wholesome editorial lifestyle photograph of ${scene}.`,
+    "Warm, hopeful, family-friendly mood. Soft natural lighting, true-to-life colors, clean and tasteful composition with calm negative space.",
+    "Everyone is fully and modestly clothed, safe, comfortable, and happy. Suitable for a general family audience (G-rated).",
+    "No text, words, captions, logos, or watermarks. No violence, no distress, no political or religious symbols, no sensitive or controversial content. Not an illustration or cartoon.",
+  ].join(" ");
+}
+
+/**
  * Generate a cover image for the draft with OpenAI's image API, upload it to
  * Spaces, register it as a MediaAsset, and return its public URL. Throws on any
  * failure so the caller can record it without losing the article.
@@ -481,14 +540,7 @@ async function generateCoverImage(
   title: string,
   authorId: string,
 ): Promise<string> {
-  const prompt = [
-    `A photorealistic editorial cover photograph for a family-and-wellbeing article titled "${title}".`,
-    `Theme: ${topic.title}.`,
-    "Candid, natural documentary-style photography of a real, diverse, wholesome family moment.",
-    "Shot on a full-frame DSLR with a 35mm lens, shallow depth of field, soft natural window light, true-to-life skin tones, realistic textures and detail, high dynamic range.",
-    "Warm, hopeful, authentic mood. Photojournalistic, not staged or stock-looking.",
-    "No text, no words, no captions, no logos, no watermarks, no illustration or cartoon style. Composition leaves calm negative space.",
-  ].join(" ");
+  const prompt = buildCoverPrompt(topic);
 
   const res = await fetchWithTimeout(
     "https://api.openai.com/v1/images/generations",
