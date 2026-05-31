@@ -1,8 +1,9 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { Eye, EyeOff, Loader2, Trash2 } from "lucide-react";
 import { deletePost, publishPost, unpublishPost } from "@/app/dashboard/posts/actions";
+import { ConfirmDialog } from "./confirm-dialog";
 
 type PostRowActionsProps = {
   postId: string;
@@ -12,10 +13,12 @@ type PostRowActionsProps = {
 /**
  * Inline draft/publish controls for a dashboard row. Each action is a server
  * action driven through a transition so the row reflects pending state and the
- * list revalidates on completion.
+ * list revalidates on completion. Deletion is gated by an in-app confirmation
+ * dialog rather than the native window.confirm().
  */
 export function PostRowActions({ postId, status }: PostRowActionsProps) {
   const [pending, startTransition] = useTransition();
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   function run(fn: () => Promise<void>) {
     startTransition(() => {
@@ -23,8 +26,8 @@ export function PostRowActions({ postId, status }: PostRowActionsProps) {
     });
   }
 
-  function onDelete() {
-    if (!confirm("Delete this post? This cannot be undone.")) return;
+  function confirmDelete() {
+    setConfirmingDelete(false);
     run(() => deletePost(postId));
   }
 
@@ -54,7 +57,7 @@ export function PostRowActions({ postId, status }: PostRowActionsProps) {
 
       <button
         type="button"
-        onClick={onDelete}
+        onClick={() => setConfirmingDelete(true)}
         disabled={pending}
         aria-label="Delete post"
         title="Delete post"
@@ -62,6 +65,18 @@ export function PostRowActions({ postId, status }: PostRowActionsProps) {
       >
         <Trash2 className="h-4 w-4" />
       </button>
+
+      <ConfirmDialog
+        open={confirmingDelete}
+        title="Delete this post?"
+        description="This permanently removes the post. This cannot be undone."
+        confirmLabel="Delete post"
+        cancelLabel="Cancel"
+        destructive
+        busy={pending}
+        onConfirm={confirmDelete}
+        onCancel={() => setConfirmingDelete(false)}
+      />
     </div>
   );
 }
