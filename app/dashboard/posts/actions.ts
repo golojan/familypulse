@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { PostType } from "@/lib/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
+import { generateCoverForPost } from "@/lib/ai-drafts";
 import {
   cleanBlocks,
   deriveCover,
@@ -213,6 +214,56 @@ export async function publishPost(postId: string) {
     data: { status: "PUBLISHED", publishedAt: owned.publishedAt ?? new Date() },
   });
   revalidatePath("/dashboard");
+}
+
+export type GenerateCoverResult = { ok: true; url: string } | { ok: false; error: string };
+
+/**
+ * Generate an AI cover illustration for the post being edited, from its current
+ * title (+ topic and SEO description for variety). Returns the uploaded public
+ * URL; the editor sets it as the cover without needing to save first.
+ */
+export async function generateCover(input: {
+  topicId: string | null;
+  title: string;
+  description?: string;
+}): Promise<GenerateCoverResult> {
+  let authorId: string;
+  try {
+    authorId = await requireAuthor();
+  } catch {
+    return { ok: false, error: "You don't have permission to do that." };
+  }
+
+  const title = input.title.trim();
+  if (!title) {
+    return { ok: false, error: "Add a title first so the cover reflects the post." };
+  }
+
+  // The generator keys its scene off the topic slug, so resolve it. A missing
+  // topic still works (falls back to a generic family scene).
+  let topicSlug = "";
+  if (input.topicId) {
+    const topic = await prisma.topic.findUnique({
+      where: { id: input.topicId },
+      select: { slug: true },
+    });
+    topicSlug = topic?.slug ?? "";
+  }
+
+  try {
+    const url = await generateCoverForPost(
+      { title, slug: topicSlug, description: input.description ?? null },
+      title,
+      authorId,
+    );
+    return { ok: true, url };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Cover generation failed.",
+    };
+  }
 }
 
 /** Permanently delete a post the author owns. */

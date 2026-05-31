@@ -12,6 +12,10 @@ export const metadata = {
   title: "Edit post · FamilyPulse",
 };
 
+// The "Generate cover" action calls the OpenAI image API (can take 30–60s+);
+// give Server Actions on this route room beyond the platform's 60s default.
+export const maxDuration = 300;
+
 export default async function EditPostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await auth();

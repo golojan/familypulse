@@ -1,11 +1,16 @@
-import { Heart } from "lucide-react";
+import Image from "next/image";
 
 export function Logo() {
   return (
     <div className="flex items-center gap-2.5">
-      <div className="grid h-9 w-9 place-items-center rounded-full border border-fp-green/20 bg-fp-mint text-fp-green shadow-soft sm:h-10 sm:w-10">
-        <Heart className="h-5 w-5" fill="currentColor" />
-      </div>
+      <Image
+        src="/logo.png"
+        alt="FamilyPulse"
+        width={40}
+        height={40}
+        priority
+        className="h-9 w-9 sm:h-10 sm:w-10"
+      />
       <span className="text-[1.45rem] font-extrabold text-fp-green sm:text-3xl">FamilyPulse</span>
     </div>
   );

@@ -9,16 +9,18 @@ import {
   Heading,
   Image as ImageIcon,
   List,
+  Loader2,
   Plus,
   Quote,
   Save,
   Send,
+  Sparkles,
   Text,
   Trash2,
 } from "lucide-react";
 import { BLOCK_LABELS, createBlock, type Block, type BlockType } from "@/lib/posts";
 import type { TopicOption } from "@/lib/topics-data";
-import { savePost, type ActionState } from "@/app/dashboard/posts/actions";
+import { generateCover, savePost, type ActionState } from "@/app/dashboard/posts/actions";
 import { MediaUploadField } from "./media-upload-field";
 import { VideoEditor } from "./video-editor";
 
@@ -66,6 +68,34 @@ export function PostEditor({
   const [blocks, setBlocks] = useState<Block[]>(
     initialBlocks.length ? initialBlocks : [createBlock("paragraph")],
   );
+  const [coverBusy, setCoverBusy] = useState(false);
+  const [coverError, setCoverError] = useState("");
+
+  async function handleGenerateCover() {
+    if (coverBusy) return;
+    setCoverError("");
+    if (!title.trim()) {
+      setCoverError("Add a title first.");
+      return;
+    }
+    setCoverBusy(true);
+    try {
+      const result = await generateCover({
+        topicId: topicId || null,
+        title,
+        description,
+      });
+      if (result.ok) {
+        setCover(result.url);
+      } else {
+        setCoverError(result.error);
+      }
+    } catch {
+      setCoverError("Cover generation failed. Try again.");
+    } finally {
+      setCoverBusy(false);
+    }
+  }
 
   // Both submit buttons share one form; `mode` is bound per-button via the action.
   const saveDraft = useMemo(() => savePost.bind(null, postId, "draft"), [postId]);
@@ -268,10 +298,33 @@ export function PostEditor({
               generated from the video in the main editor column. */}
           {usesVideoFlow ? null : (
             <div className="rounded-lg border border-fp-line bg-white p-5 shadow-card">
-              <p className="text-sm font-extrabold text-fp-ink">Cover photo</p>
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-sm font-extrabold text-fp-ink">Cover photo</p>
+                {isPublished ? null : (
+                  <button
+                    type="button"
+                    onClick={handleGenerateCover}
+                    disabled={coverBusy}
+                    title="Generate an AI cover illustration from the post title"
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-fp-green/30 bg-fp-mint px-2.5 py-1.5 text-xs font-extrabold text-fp-green transition hover:bg-fp-green hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {coverBusy ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-3.5 w-3.5" />
+                    )}
+                    {coverBusy ? "Generating…" : "Generate"}
+                  </button>
+                )}
+              </div>
               <p className="mt-1 text-xs font-semibold leading-5 text-fp-muted">
-                Upload or drop an image to use as the post cover.
+                Upload or drop an image, or generate an illustration from the title.
               </p>
+              {coverError ? (
+                <p className="mt-2 text-xs font-bold text-red-600" aria-live="polite">
+                  {coverError}
+                </p>
+              ) : null}
               {cover ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img

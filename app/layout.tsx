@@ -7,6 +7,8 @@ export const metadata: Metadata = {
   title: "FamilyPulse - Healthy Families. Stronger Together.",
   description:
     "Family education blog and podcast for couples, parenting, relationships, discipline and work-life balance.",
+  // Icons are wired via the App Router file conventions: app/icon.png and
+  // app/apple-icon.png (Next auto-generates the correct <link> tags).
 };
 
 const nunito = Nunito({
