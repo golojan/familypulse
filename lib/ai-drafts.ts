@@ -187,6 +187,40 @@ async function pickTopics(topicSlug: string | null, count: number): Promise<Topi
   return Array.from({ length: count }, (_, i) => ordered[i % ordered.length]);
 }
 
+/**
+ * Regions the family stories cycle through, so coverage is globally balanced
+ * rather than defaulting to one culture. Each entry pairs a region label with a
+ * light setting hint the model can use to ground the story authentically and
+ * respectfully (names, foods, settings) without stereotyping.
+ */
+const STORY_REGIONS: ReadonlyArray<{ region: string; hint: string }> = [
+  { region: "Africa", hint: "e.g. Nigeria, Kenya, Ghana, or South Africa" },
+  { region: "Asia", hint: "e.g. India, the Philippines, Japan, or Indonesia" },
+  { region: "Europe", hint: "e.g. the UK, Germany, Spain, or Poland" },
+  { region: "North America", hint: "e.g. the USA, Canada, or Mexico" },
+  { region: "South America", hint: "e.g. Brazil, Colombia, or Argentina" },
+  { region: "Middle East", hint: "e.g. Egypt, Jordan, or the UAE" },
+  { region: "Oceania", hint: "e.g. Australia, New Zealand, or Fiji" },
+];
+
+/**
+ * Pick the next region for a draft, cycling so coverage stays balanced. We offset
+ * the cycle by how many posts already exist so consecutive runs continue the
+ * rotation rather than always starting at the same region.
+ */
+async function nextRegions(count: number): Promise<Array<(typeof STORY_REGIONS)[number]>> {
+  let offset = 0;
+  try {
+    offset = await prisma.post.count();
+  } catch {
+    offset = 0;
+  }
+  return Array.from(
+    { length: count },
+    (_, i) => STORY_REGIONS[(offset + i) % STORY_REGIONS.length],
+  );
+}
+
 /** The author for generated drafts: the earliest superadmin. */
 async function resolveAuthorId(): Promise<string | null> {
   const admin = await prisma.user.findFirst({
@@ -273,10 +307,11 @@ async function runGeneration(config: DraftConfig): Promise<RunResult> {
 
   const postIds: string[] = [];
   const errors: string[] = [];
+  const regions = await nextRegions(topics.length);
 
-  for (const topic of topics) {
+  for (const [index, topic] of topics.entries()) {
     try {
-      const generated = await callProvider(config, topic);
+      const generated = await callProvider(config, topic, regions[index]);
       const blocks = cleanBlocks(parseBlocks(generated.blocks));
       const title = generated.title.trim().slice(0, 200);
       if (!title || blocks.length === 0) {
@@ -336,13 +371,17 @@ type GeneratedPost = { title: string; blocks: unknown };
  * (see lib/posts) so the result drops straight into the editor. The topic's
  * `writerPrompt` (set by an editor) steers tone and angle.
  */
-function buildPrompt(topic: TopicSeed): { system: string; user: string } {
+function buildPrompt(
+  topic: TopicSeed,
+  region: (typeof STORY_REGIONS)[number],
+): { system: string; user: string } {
   const system = [
     "You are an editorial writer for FamilyPulse, a warm, practical publication about family life, parenting, relationships, and wellbeing.",
     "Write an original, publish-ready article — not an outline or a draft to be finished later. It should read as a complete, polished piece a human editor could publish with only a quick review.",
     "",
     "STORYTELLING PATTERN (required): Every article MUST open with a heart-touching, engaging, true-to-life family story or vignette that is directly relevant to the topic. Open the very first paragraph in the middle of a relatable, emotionally resonant family moment — give the people first names and a specific, vivid situation (a parent at bedtime, a couple after a hard day, a child's small breakthrough). Make the reader feel something. Then build the entire article on that story: refer back to those same characters and that moment as you draw out lessons, so the practical advice feels grounded in real life rather than abstract. Close by returning to the family from the opening to show hope or change.",
     "The story must be illustrative and realistic but fictional/composite — do not claim it is a specific real named person or a true news event.",
+    `GLOBAL BALANCE (required): Set this article's family story in ${region.region} (${region.hint}). Use names, foods, settings, and cultural details that fit that region naturally and respectfully — authentic, never stereotyped or caricatured. The practical advice itself stays universal and applies to all families; only the story's setting and characters reflect the region.`,
     "",
     "Length & pacing: a 3–5 minute read, roughly 700–1100 words. Use 8–14 blocks total.",
     "Structure: a compelling title; an opening of 1–2 paragraphs telling the family story (no heading before it); then 3–5 H2 subheadings (level 2) that each draw a lesson from that story, each followed by 1–3 short paragraphs (3–4 sentences each) that reference the same characters/moment; at least one list (bullet or numbered) of practical, specific tips; optionally one short quote; and a final paragraph that returns to the opening family and ends with a clear, encouraging call to action for the reader.",
@@ -364,6 +403,7 @@ function buildPrompt(topic: TopicSeed): { system: string; user: string } {
     topic.writerPrompt ? `Editorial guidance: ${topic.writerPrompt}` : "",
     "Write one fresh, complete, publish-ready article for this topic now.",
     "Open with a heart-touching, true-to-life family story relevant to this topic, then build the whole article on that story.",
+    `Set the family story in ${region.region}, with authentic, respectful regional detail.`,
   ]
     .filter(Boolean)
     .join("\n");
@@ -401,8 +441,12 @@ async function fetchWithTimeout(
   }
 }
 
-async function callProvider(config: DraftConfig, topic: TopicSeed): Promise<GeneratedPost> {
-  const { system, user } = buildPrompt(topic);
+async function callProvider(
+  config: DraftConfig,
+  topic: TopicSeed,
+  region: (typeof STORY_REGIONS)[number],
+): Promise<GeneratedPost> {
+  const { system, user } = buildPrompt(topic, region);
   const raw =
     config.provider === "deepseek"
       ? await callDeepSeek(config, system, user)

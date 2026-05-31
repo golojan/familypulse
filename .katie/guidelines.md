@@ -12,6 +12,7 @@ Every FamilyPulse blog post **must open with a heart-touching, engaging, true-to
 - **Build on the story.** Each subsequent section should draw a lesson from that same story, referring back to the same characters and moment so the practical guidance feels grounded in real life rather than abstract.
 - **Close the loop.** End by returning to the family from the opening to show hope, growth, or change, then give a clear, encouraging call to action.
 - **Keep it honest.** Stories should be realistic and emotionally true, but illustrative/composite — do not present them as a specific real named person or a true news event.
+- **Cycle regions for global balance.** Rotate the story's setting across world regions — Africa, Asia, Europe, North America, South America, the Middle East, Oceania — so the library reflects families everywhere rather than defaulting to one culture. Use names, foods, and settings that fit the chosen region authentically and respectfully (never stereotyped). The practical advice stays universal; only the story's setting and characters reflect the region. Generated posts cycle through these regions automatically.
 
 ## Validation and Moderation
 
