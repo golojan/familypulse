@@ -323,7 +323,7 @@ async function runGeneration(config: DraftConfig): Promise<RunResult> {
       let coverImage: string | null = null;
       if (config.coverImages && config.openaiApiKey) {
         try {
-          coverImage = await generateCoverImage(config, topic, title, authorId);
+          coverImage = await generateCoverImage(config, topic, title, authorId, regions[index]);
         } catch (err) {
           errors.push(
             `${topic.slug}: cover image failed (${err instanceof Error ? err.message : "unknown"})`,
@@ -376,17 +376,19 @@ function buildPrompt(
   region: (typeof STORY_REGIONS)[number],
 ): { system: string; user: string } {
   const system = [
-    "You are an editorial writer for FamilyPulse, an evidence-based publication about family life, parenting, relationships, and wellbeing.",
+    "You are an editorial writer for FamilyPulse, an evidence-based publication about family life, parenting, relationships, Healthy-living and wellbeing.",
     "Write an original, publish-ready article — not an outline or a draft to be finished later. It should read as a complete, polished piece a human editor could publish with only a quick review.",
     "",
-    "VOICE (required): Write in an instructive, analytical, journalistic third person. Do NOT use the first person ('I', 'me', 'my', 'we', 'our') and do NOT invent a fictional family or named characters as the narrative spine. Address the reader directly only sparingly ('you', 'parents', 'families'). The piece should read like a well-researched explainer from a serious family-and-education publication, not a personal essay or a made-up vignette.",
+    "VOICE (required): Write in an instructive, analytical, journalistic third person. Do NOT use the first person ('I', 'me', 'my', 'we', 'our') and never write a personal essay. You SHOULD, however, use vivid narrative — open and illustrate with a real-to-life scene that paints a clear picture of the topic — but told in the third person about 'a parent', 'a mother in Lagos', 'many families' rather than as the author's own experience. Address the reader directly only sparingly ('you', 'parents', 'families'). The piece should read like a well-reported feature: a story that draws the reader in, anchored throughout by real evidence.",
+    "",
+    "NARRATIVE + EVIDENCE (required): Open with a short, evocative third-person scene (1–2 paragraphs, no heading) that makes the topic feel concrete and human — a recognisable family moment, a typical struggle, a turning point — described from the outside (no 'I'). Then connect that scene to real, verifiable evidence and carry the thread through the article, returning to the human picture as you explain what the research means. Keep illustrative scenes generic and composite ('a father trying to get a reluctant teen to talk'); do not present them as a specific real named person or a true news event.",
     "",
     "EVIDENCE (required): Ground claims in real, verifiable evidence — peer-reviewed research, longitudinal studies, official statistics, and reputable institutions. Reference credible bodies and sources by name where relevant, such as the Education Endowment Foundation (EEF), the Education Research and Information Centre / ERIC (eric.org.uk and eric.ed.gov), UNICEF, the WHO, the OECD, the CDC, the UK Office for National Statistics, the American Academy of Pediatrics, and similar. Cite specific, plausible findings and data points (e.g. 'a 2019 OECD analysis found…', 'longitudinal research summarised by the EEF suggests…'). Only attribute findings to real organisations; never fabricate a study title, DOI, or a direct quotation from a named individual. When you are summarising the general direction of research rather than a single named study, say so honestly ('research consistently indicates…').",
     "",
-    `GLOBAL INSIGHTS (required): Draw on globally balanced data and real-world examples. For this article, foreground evidence, statistics, policy, or practice from ${region.region} (${region.hint}) alongside universal guidance — for example a national programme, a published study, or recorded outcomes from that region — so coverage reflects families worldwide rather than defaulting to one country. The practical guidance stays universal and applies to all families.`,
+    `GLOBAL INSIGHTS (required): Draw on globally balanced data and real-world examples. Ground both the illustrative scene and the evidence in ${region.region} (${region.hint}) — use a setting, names, and details that fit the region authentically and respectfully (never stereotyped), and foreground statistics, policy, a national programme, or recorded outcomes from that region — so coverage reflects families worldwide rather than defaulting to one country. The practical guidance stays universal and applies to all families.`,
     "",
     "Length & pacing: a 3–5 minute read, roughly 700–1100 words. Use 8–14 blocks total.",
-    "Structure: a clear, descriptive, non-clickbait title; an opening of 1–2 paragraphs that frame the question or problem with a concrete data point, recorded trend, or research finding (no heading before it); then 3–5 H2 subheadings (level 2), each followed by 1–3 short paragraphs (3–4 sentences each) that explain the evidence and what it means in practice; at least one list (bullet or numbered) of specific, actionable, evidence-informed steps; optionally one short quote attributed to a real organisation or a clearly general statement of consensus; and a final paragraph summarising the takeaways with a clear, practical call to action.",
+    "Structure: a clear, descriptive, non-clickbait title; an opening of 1–2 paragraphs that paint a vivid third-person scene illustrating the topic (no heading before it), quickly anchored to a concrete data point, recorded trend, or research finding; then 3–5 H2 subheadings (level 2), each followed by 1–3 short paragraphs (3–4 sentences each) that weave the evidence together with what it means in practice, referring back to the opening picture where it helps; at least one list (bullet or numbered) of specific, actionable, evidence-informed steps; optionally one short quote attributed to a real organisation or a clearly general statement of consensus; and a final paragraph that returns to the human picture and summarises the takeaways with a clear, practical call to action.",
     "Quality: be specific, concrete, and genuinely useful — cite figures, name sources, and give actionable steps, not platitudes. Maintain an authoritative, clear, trustworthy, analytical tone. Proofread for grammar and clarity. Avoid clichés, filler, keyword stuffing, and any prescriptive medical, legal, or financial advice; frame health, legal, and financial points as general, evidence-based information and signpost professional support where appropriate.",
     "",
     "Return ONLY a JSON object — no markdown fences, no commentary — matching exactly this TypeScript shape:",
@@ -404,9 +406,9 @@ function buildPrompt(
     topic.description ? `Topic description: ${topic.description}` : "",
     topic.writerPrompt ? `Editorial guidance: ${topic.writerPrompt}` : "",
     "Write one fresh, complete, publish-ready article for this topic now.",
-    "Use an instructive, analytical third-person voice (no first person, no invented family characters).",
+    "Open with a vivid, real-to-life third-person scene that paints a clear picture of the topic (no first person, no personal essay), then carry that narrative thread through the piece.",
     "Ground it in real, verifiable evidence — cite reputable organisations and research (e.g. EEF, ERIC / eric.org.uk, UNICEF, WHO, OECD, CDC, AAP) and real data points; never fabricate study titles or quotations.",
-    `Foreground globally balanced insights, including relevant evidence or examples from ${region.region}.`,
+    `Set the scene and foreground globally balanced insights in ${region.region}, with authentic, respectful regional detail.`,
   ]
     .filter(Boolean)
     .join("\n");
@@ -563,21 +565,167 @@ const COVER_SCENE_RULES: ReadonlyArray<[keyword: string, scene: string]> = [
 const DEFAULT_COVER_SCENE = "a happy, wholesome family spending warm, joyful time together at home";
 
 /**
- * Build a policy-safe cover-image prompt for a topic. The scene is chosen from
- * the curated keyword rules above (never the article title or raw topic text);
- * we add wholesome/safe guardrails and explicitly forbid unsafe or sensitive
- * content so generation isn't blocked by the provider.
+ * A rotating palette of distinct visual styles so covers don't all look like the
+ * same stock photo. Each entry says how to render the scene; `figurative: false`
+ * styles render the subject as objects/abstract forms (no depicted people), which
+ * both varies the look and sidesteps people-stereotyping.
  */
-function buildCoverPrompt(topic: TopicSeed): string {
+const COVER_STYLES: ReadonlyArray<{ render: string; figurative: boolean }> = [
+  {
+    render:
+      "A photorealistic, wholesome editorial lifestyle photograph. Soft natural lighting, true-to-life colors, shallow depth of field.",
+    figurative: true,
+  },
+  {
+    render:
+      "A warm, textured oil painting in a contemporary editorial illustration style. Visible brushwork, rich light, painterly.",
+    figurative: true,
+  },
+  {
+    render:
+      "A soft, light watercolor illustration with gentle washes, loose edges, and plenty of airy negative space.",
+    figurative: true,
+  },
+  {
+    render:
+      "A clean, modern flat vector illustration with bold simple shapes, a friendly limited color palette, and crisp geometry.",
+    figurative: true,
+  },
+  {
+    render:
+      "A delicate black-and-white pen-and-ink line drawing with fine cross-hatching on warm off-white paper.",
+    figurative: true,
+  },
+  {
+    render:
+      "A tactile paper-collage / cut-paper artwork with layered textured shapes and soft drop shadows.",
+    figurative: true,
+  },
+  {
+    render:
+      "A clean, modern data-insight infographic: tasteful bar and line charts, simple icons, and a calm muted palette on a light background. No real numbers or readable text.",
+    figurative: false,
+  },
+  {
+    render:
+      "A minimal, elegant abstract conceptual illustration using symbolic objects, soft gradients, and geometric forms — no depicted people.",
+    figurative: false,
+  },
+];
+
+/**
+ * Words that get an article's own title/description dropped from the image
+ * prompt (they tend to trip the provider's content policy). When the subject is
+ * too sensitive we fall back to the curated wholesome scene.
+ */
+const COVER_SENSITIVE_TERMS = [
+  "abuse",
+  "abus",
+  "trauma",
+  "death",
+  "dying",
+  "grief",
+  "suicide",
+  "self-harm",
+  "depress",
+  "anxiety",
+  "divorce",
+  "addiction",
+  "alcohol",
+  "drug",
+  "violence",
+  "disorder",
+  "illness",
+  "sick",
+  "diet",
+  "sex",
+  "porn",
+  "politic",
+  "religio",
+  "war",
+  "gun",
+  "weapon",
+  "punish",
+  "spank",
+];
+
+/**
+ * Derive a short, policy-safe subject phrase from the article's own title and
+ * description so each cover reflects its specific article (not just its topic).
+ * Returns null when the title/description looks sensitive, so the caller falls
+ * back to the curated wholesome scene for that topic.
+ */
+function coverSubjectFromArticle(title: string, description: string | null): string | null {
+  const source = `${title} ${description ?? ""}`.toLowerCase();
+  if (COVER_SENSITIVE_TERMS.some((term) => source.includes(term))) return null;
+  // Use the cleaned-up title as the subject hint; strip subtitle/punctuation.
+  const cleaned = title
+    .replace(/[:–—-].*$/, "") // drop subtitle after a colon/dash
+    .replace(/["'“”‘’]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (cleaned.length < 4) return null;
+  return cleaned.slice(0, 90);
+}
+
+/**
+ * Stable per-article style index so a given post always gets the same style, but
+ * the library as a whole spreads across the palette.
+ */
+function coverStyleIndex(seed: string): number {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  }
+  return hash % COVER_STYLES.length;
+}
+
+/**
+ * Build a policy-safe, varied cover-image prompt. Two things keep covers from
+ * repeating: (1) the visual STYLE rotates across a palette (photo, painting,
+ * line art, infographic, …) keyed off the article title, and (2) the SUBJECT is
+ * drawn from the article's own title + description when it's safe, falling back
+ * to the curated wholesome scene per topic. Wholesome/safety guardrails are
+ * always appended so generation isn't blocked.
+ */
+function buildCoverPrompt(
+  topic: TopicSeed,
+  title: string,
+  region?: { region: string; hint: string },
+): string {
   const slug = topic.slug.toLowerCase();
-  const scene =
+  const topicScene =
     COVER_SCENE_RULES.find(([keyword]) => slug.includes(keyword))?.[1] ?? DEFAULT_COVER_SCENE;
+
+  const style = COVER_STYLES[coverStyleIndex(`${title}|${slug}`)];
+  const articleSubject = coverSubjectFromArticle(title, topic.description);
+
+  // Figurative styles can depict the curated family scene and reflect the
+  // article subject; abstract styles use objects/symbols only (no people).
+  const subject = style.figurative
+    ? articleSubject
+      ? `${topicScene}, evoking the theme of "${articleSubject}"`
+      : topicScene
+    : articleSubject
+      ? `symbolic objects and forms that evoke the theme of "${articleSubject}" (no people)`
+      : "symbolic objects and forms that evoke wholesome family life (no people)";
+
+  const regionLine = region
+    ? `Reflect a ${region.region} setting and cultural details authentically and respectfully (never stereotyped).`
+    : "";
+
   return [
-    `A photorealistic, wholesome editorial lifestyle photograph of ${scene}.`,
-    "Warm, hopeful, family-friendly mood. Soft natural lighting, true-to-life colors, clean and tasteful composition with calm negative space.",
-    "Everyone is fully and modestly clothed, safe, comfortable, and happy. Suitable for a general family audience (G-rated).",
-    "No text, words, captions, logos, or watermarks. No violence, no distress, no political or religious symbols, no sensitive or controversial content. Not an illustration or cartoon.",
-  ].join(" ");
+    style.render,
+    `Subject: ${subject}.`,
+    regionLine,
+    "Warm, hopeful, family-friendly mood. Tasteful composition with calm negative space.",
+    style.figurative
+      ? "Any people are fully and modestly clothed, safe, comfortable, and happy. Suitable for a general family audience (G-rated)."
+      : "Suitable for a general family audience (G-rated).",
+    "No text, words, captions, numbers, logos, or watermarks. No violence, no distress, no political or religious symbols, no sensitive or controversial content.",
+  ]
+    .filter(Boolean)
+    .join(" ");
 }
 
 /**
@@ -590,8 +738,9 @@ async function generateCoverImage(
   topic: TopicSeed,
   title: string,
   authorId: string,
+  region?: (typeof STORY_REGIONS)[number],
 ): Promise<string> {
-  const prompt = buildCoverPrompt(topic);
+  const prompt = buildCoverPrompt(topic, title, region);
 
   const res = await fetchWithTimeout(
     "https://api.openai.com/v1/images/generations",
@@ -653,7 +802,7 @@ async function generateCoverImage(
 }
 
 /** Minimal topic info needed to generate a cover for an existing post. */
-export type CoverTopic = { title: string; slug: string };
+export type CoverTopic = { title: string; slug: string; description?: string | null };
 
 /**
  * Public entry point for generating a cover image for an existing post (used by
@@ -669,12 +818,12 @@ export async function generateCoverForPost(
   const config = await getDraftConfig();
   if (!config.coverImages) throw new Error("Cover image generation is disabled in settings.");
   if (!config.openaiApiKey) throw new Error("No OpenAI API key configured.");
-  // generateCoverImage only reads title + slug from the topic.
+  // generateCoverImage reads title + slug + description from the topic.
   const seed: TopicSeed = {
     id: "",
     title: topic.title,
     slug: topic.slug,
-    description: null,
+    description: topic.description ?? null,
     writerPrompt: null,
   };
   return generateCoverImage(config, seed, title, authorId);

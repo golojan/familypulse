@@ -136,7 +136,11 @@ async function auditOne(post: AuditablePost, errors: string[]): Promise<boolean>
       data.coverImage = bodyCover;
     } else if (post.topic) {
       try {
-        data.coverImage = await generateCoverForPost(post.topic, post.title, post.authorId);
+        data.coverImage = await generateCoverForPost(
+          { ...post.topic, description: post.excerpt },
+          post.title,
+          post.authorId,
+        );
       } catch (err) {
         errors.push(
           `${post.slug}: cover regenerate failed (${err instanceof Error ? err.message : "unknown"})`,
