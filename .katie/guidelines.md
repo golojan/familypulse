@@ -19,6 +19,7 @@ When using Editorjs for creating posts, consider the following formatting tips t
 ## Formatting Guidelines
 
 - **Headings**: Use headings to structure your content. Use H1 for the main title, H2 for subheadings, and H3 for further subdivisions. This helps readers navigate the content easily.
+- **SEO description**: Include a concise and informative SEO description for your post. This should summarize the main points of the content and include relevant keywords to improve search engine visibility.
 - **Paragraphs**: Keep paragraphs short and focused. Aim for 3-4 sentences per paragraph to maintain reader engagement.
 - **Bullet Points**: Use bullet points or numbered lists to break down complex information into digestible parts. This enhances readability and allows readers to quickly grasp key points.
 - **Links**: When referencing external sources, use descriptive anchor text for links. This provides context to readers about the content they will find when they click the link.
