@@ -80,7 +80,7 @@ export default async function PulseAiPage() {
                 !config.coverImages
                   ? "Off"
                   : config.openaiApiKey
-                    ? `On · ${config.openaiImageModel}`
+                    ? `On · ${config.openaiImageModel} · ${config.openaiImageQuality}`
                     : "On · no OpenAI key"
               }
             />

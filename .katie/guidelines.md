@@ -23,7 +23,7 @@ When using Editorjs for creating posts, consider the following formatting tips t
 - **Paragraphs**: Keep paragraphs short and focused. Aim for 3-4 sentences per paragraph to maintain reader engagement.
 - **Bullet Points**: Use bullet points or numbered lists to break down complex information into digestible parts. This enhances readability and allows readers to quickly grasp key points.
 - **Links**: When referencing external sources, use descriptive anchor text for links. This provides context to readers about the content they will find when they click the link.
-- **Images**: Include relevant images to complement your text. Ensure that images are of high quality and properly attributed if necessary. Use alt text to describe images for accessibility purposes.
+- **Images**: Include relevant images to complement your text. Ensure that images are of high quality, photo-realistic and properly attributed if necessary. Use alt text to describe images for accessibility purposes.
 - **Tone and Style**: Maintain a consistent tone and style throughout your post. Consider your audience and aim for a tone that is appropriate for the content you are sharing. Whether it's formal, conversational, or humorous, consistency is key to engaging your readers.
 - **Proofreading**: Always proofread your post before publishing. Check for spelling and grammar errors, as well as clarity and coherence. Consider using tools like Grammarly or Hemingway to assist with proofreading and improving readability.
 - **SEO Best Practices**: If applicable, incorporate relevant keywords naturally into your post to improve search engine visibility. However, avoid keyword stuffing, which can negatively impact readability and SEO performance.

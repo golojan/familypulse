@@ -34,6 +34,10 @@ const DEFAULT_INTERVAL_MINUTES = 60;
 const DEFAULT_PER_RUN = 1;
 const MAX_PER_RUN = 5;
 
+export type ImageQuality = "low" | "medium" | "high" | "auto";
+const IMAGE_QUALITIES: readonly ImageQuality[] = ["low", "medium", "high", "auto"];
+const DEFAULT_IMAGE_QUALITY: ImageQuality = "medium";
+
 export type DraftConfig = {
   enabled: boolean;
   provider: AiProvider;
@@ -46,6 +50,7 @@ export type DraftConfig = {
   coverImages: boolean;
   openaiApiKey: string | undefined;
   openaiImageModel: string;
+  openaiImageQuality: ImageQuality;
 };
 
 /** Resolve and normalize the AI draft settings from the database/env. */
@@ -82,7 +87,16 @@ export async function getDraftConfig(): Promise<DraftConfig> {
     coverImages: (s.AI_DRAFTS_COVER_IMAGES ?? "").trim().toLowerCase() === "true",
     openaiApiKey: s.OPENAI_API_KEY,
     openaiImageModel: s.OPENAI_IMAGE_MODEL?.trim() || DEFAULT_OPENAI_IMAGE_MODEL,
+    openaiImageQuality: parseImageQuality(s.OPENAI_IMAGE_QUALITY),
   };
+}
+
+/** Normalize the configured image quality, defaulting to medium for unknown values. */
+function parseImageQuality(raw: string | undefined): ImageQuality {
+  const value = (raw ?? "").trim().toLowerCase();
+  return (IMAGE_QUALITIES as readonly string[]).includes(value)
+    ? (value as ImageQuality)
+    : DEFAULT_IMAGE_QUALITY;
 }
 
 function clampInt(raw: string | undefined, fallback: number, min: number, max: number): number {
@@ -412,10 +426,12 @@ async function generateCoverImage(
   authorId: string,
 ): Promise<string> {
   const prompt = [
-    `Editorial cover illustration for a family-and-wellbeing article titled "${title}".`,
+    `A photorealistic editorial cover photograph for a family-and-wellbeing article titled "${title}".`,
     `Theme: ${topic.title}.`,
-    "Warm, hopeful, modern flat illustration with soft natural lighting. Inclusive, wholesome family life.",
-    "No text, no words, no logos, no watermarks. Composition leaves calm negative space.",
+    "Candid, natural documentary-style photography of a real, diverse, wholesome family moment.",
+    "Shot on a full-frame DSLR with a 35mm lens, shallow depth of field, soft natural window light, true-to-life skin tones, realistic textures and detail, high dynamic range.",
+    "Warm, hopeful, authentic mood. Photojournalistic, not staged or stock-looking.",
+    "No text, no words, no captions, no logos, no watermarks, no illustration or cartoon style. Composition leaves calm negative space.",
   ].join(" ");
 
   const res = await fetch("https://api.openai.com/v1/images/generations", {
@@ -429,7 +445,7 @@ async function generateCoverImage(
       prompt,
       n: 1,
       size: "1536x1024", // landscape, suits a cover
-      quality: "medium",
+      quality: config.openaiImageQuality, // admin-configurable; defaults to medium
     }),
   });
   if (!res.ok) {

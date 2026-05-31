@@ -20,6 +20,7 @@ export type SettingKey =
   | "DEEPSEEK_MODEL"
   | "OPENAI_API_KEY"
   | "OPENAI_IMAGE_MODEL"
+  | "OPENAI_IMAGE_QUALITY"
   | "AI_DRAFTS_COVER_IMAGES"
   | "CRON_SECRET";
 
@@ -172,7 +173,14 @@ export const SETTING_GROUPS: SettingGroup[] = [
         label: "OpenAI Image Model",
         secret: false,
         placeholder: "gpt-image-1",
-        help: "Defaults to gpt-image-1 when blank.",
+        help: "OpenAI's latest image model. Defaults to gpt-image-1 (photorealistic) when blank.",
+      },
+      {
+        key: "OPENAI_IMAGE_QUALITY",
+        label: "OpenAI Image Quality",
+        secret: false,
+        placeholder: "medium",
+        help: "Cover image quality: low, medium, high, or auto. Higher = more detail but slower and pricier. Defaults to medium.",
       },
     ],
   },

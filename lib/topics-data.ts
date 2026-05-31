@@ -5,6 +5,7 @@ import {
   Home,
   MessageCircle,
   PartyPopper,
+  PlayCircle,
   ShieldCheck,
   Star,
   type LucideIcon,
@@ -12,13 +13,18 @@ import {
 import { prisma } from "@/lib/prisma";
 import {
   allPosts as fallbackPosts,
+  articles as fallbackArticles,
   getPostBySlug as getFallbackPostBySlug,
   getPostsByTopicSlug as getFallbackPostsByTopicSlug,
   getTopicBySlug as getFallbackTopicBySlug,
+  mediaCards as fallbackMediaCards,
+  popularPosts as fallbackPopularPosts,
   slugify,
   topicBlogSections as fallbackTopicSections,
   topics as fallbackTopics,
   type Article,
+  type MediaCard,
+  type PopularPost,
   type Topic,
   type TopicBlogSection,
 } from "@/lib/familypulse-data";
@@ -272,6 +278,81 @@ export async function listTopicSectionsForLanding(limit = 7): Promise<TopicBlogS
   } catch (error) {
     warnTopicStoreFallback(error);
     return fallbackTopicSections;
+  }
+}
+
+/** Shared include for pulling published posts with their topic. */
+const PUBLISHED_WITH_TOPIC = {
+  where: { status: "PUBLISHED" as const },
+  orderBy: [{ publishedAt: "desc" as const }, { updatedAt: "desc" as const }],
+  include: { topic: true },
+};
+
+/**
+ * Latest published posts (any type) as Articles, for the homepage "Featured
+ * Articles" rail. Falls back to the static set when the store is empty/unavailable.
+ */
+export async function listFeaturedPosts(limit = 3): Promise<Article[]> {
+  try {
+    const posts = await prisma.post.findMany({ ...PUBLISHED_WITH_TOPIC, take: limit });
+    if (posts.length === 0) return fallbackArticles;
+    return posts.map(dbPostToArticle);
+  } catch (error) {
+    warnTopicStoreFallback(error);
+    return fallbackArticles;
+  }
+}
+
+/**
+ * Latest published video/podcast posts as MediaCards, for the homepage "Videos"
+ * grid. Falls back to the static set when there are none.
+ */
+export async function listVideoPosts(limit = 5): Promise<MediaCard[]> {
+  try {
+    const posts = await prisma.post.findMany({
+      ...PUBLISHED_WITH_TOPIC,
+      where: { status: "PUBLISHED", type: { in: ["VIDEO", "PODCAST"] } },
+      take: limit,
+    });
+    if (posts.length === 0) return fallbackMediaCards;
+    return posts.map((post) => {
+      const article = dbPostToArticle(post);
+      return {
+        label: article.topicTitle ?? "Video",
+        title: article.title,
+        image: article.image,
+        icon: PlayCircle,
+        href: article.href,
+      } satisfies MediaCard;
+    });
+  } catch (error) {
+    warnTopicStoreFallback(error);
+    return fallbackMediaCards;
+  }
+}
+
+/**
+ * Most recent published posts as PopularPosts, for the homepage sidebar. (We
+ * don't track views, so "popular" is approximated by recency.) Falls back to
+ * the static set when empty.
+ */
+export async function listPopularPosts(limit = 5): Promise<PopularPost[]> {
+  try {
+    const posts = await prisma.post.findMany({ ...PUBLISHED_WITH_TOPIC, take: limit });
+    if (posts.length === 0) return fallbackPopularPosts;
+    return posts.map((post) => {
+      const article = dbPostToArticle(post);
+      return {
+        title: article.title,
+        image: article.image,
+        meta: article.meta,
+        read: article.read,
+        href: article.href,
+      } satisfies PopularPost;
+    });
+  } catch (error) {
+    warnTopicStoreFallback(error);
+    return fallbackPopularPosts;
   }
 }
 
