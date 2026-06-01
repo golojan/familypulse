@@ -15,7 +15,7 @@ export function CategoryBlogSections({ sections }: CategoryBlogSectionsProps) {
   return (
     <section className="mt-4 grid gap-4">
       {visibleSections.map((section, index) => (
-        <TopicModule key={section.title} section={section} variant={index % 4} />
+        <TopicModule key={section.title} section={section} variant={index % 6} />
       ))}
     </section>
   );
@@ -32,13 +32,15 @@ function TopicModule({ section, variant }: { section: TopicBlogSection; variant:
   return (
     <section
       id={section.slug}
-      className="rounded-lg border border-fp-line bg-white p-4 shadow-card sm:p-5"
+      className="rounded-md border border-fp-line/60 bg-fp-soft p-4 shadow-none sm:p-5"
     >
       <SectionHeader title={section.title} href={section.href} />
       {layout === 0 ? <HeroAndList posts={posts} /> : null}
       {layout === 1 ? <MosaicGrid posts={posts} /> : null}
       {layout === 2 ? <ListLedLayout posts={posts} /> : null}
       {layout === 3 ? <WideRowLayout posts={posts} /> : null}
+      {layout === 4 ? <DualHeroLayout posts={posts} /> : null}
+      {layout === 5 ? <FeatureRailLayout posts={posts} /> : null}
     </section>
   );
 }
@@ -98,7 +100,7 @@ function ListLedLayout({ posts }: { posts: Article[] }) {
 
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
-      <div className="divide-y divide-fp-line rounded-md border border-fp-line bg-white">
+      <div className="divide-y divide-fp-line rounded-md border border-fp-line/60 bg-fp-soft">
         {listPosts.map((post, index) => (
           <a
             key={post.title}
@@ -169,6 +171,50 @@ function WideRowLayout({ posts }: { posts: Article[] }) {
   );
 }
 
+function DualHeroLayout({ posts }: { posts: Article[] }) {
+  const [lead, second, ...rest] = posts;
+  const railPosts = rest.slice(0, 3);
+  const morePosts = rest.slice(3);
+
+  return (
+    <div className="grid gap-4">
+      <div className="grid gap-4 lg:grid-cols-3">
+        {lead ? <OverlayPost post={lead} className="min-h-[20rem] lg:col-span-2" /> : null}
+        <div className="grid gap-3">
+          {second ? <OverlayPost post={second} className="min-h-[10rem]" /> : null}
+          {railPosts[0] ? <CompactRow post={railPosts[0]} /> : null}
+        </div>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {railPosts.slice(1).map((post) => (
+          <CompactRow key={post.title} post={post} />
+        ))}
+      </div>
+      <MorePostGrid posts={morePosts} />
+    </div>
+  );
+}
+
+function FeatureRailLayout({ posts }: { posts: Article[] }) {
+  const cards = posts.slice(0, 4);
+  const morePosts = posts.slice(4);
+
+  return (
+    <div className="grid gap-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {cards.map((post, index) => (
+          <OverlayPost
+            key={post.title}
+            post={post}
+            className={index === 0 ? "min-h-[18rem] sm:col-span-2 xl:col-span-1" : "min-h-[18rem]"}
+          />
+        ))}
+      </div>
+      <MorePostGrid posts={morePosts} />
+    </div>
+  );
+}
+
 function OverlayPost({ post, className = "" }: { post: Article; className?: string }) {
   return (
     <a
@@ -200,7 +246,7 @@ function CompactRow({ post }: { post: Article }) {
   return (
     <a
       href={getArticleHref(post)}
-      className="grid min-h-[9rem] grid-cols-[7rem_1fr] overflow-hidden rounded-md border border-fp-line bg-white transition hover:shadow-soft"
+      className="grid min-h-[9rem] grid-cols-[7rem_1fr] overflow-hidden rounded-md border border-transparent bg-fp-soft transition hover:shadow-soft"
     >
       <span className="relative">
         <Image src={post.image} alt={post.title} fill className="object-cover" sizes="112px" />
@@ -220,7 +266,7 @@ function TextStrip({ post }: { post: Article }) {
   return (
     <a
       href={getArticleHref(post)}
-      className="rounded-md border border-fp-line bg-fp-soft p-4 transition hover:bg-fp-mint/60"
+      className="rounded-md border border-transparent bg-background p-4 transition hover:bg-fp-mint/60"
     >
       <span className="text-xs font-extrabold uppercase text-fp-green">{post.tag}</span>
       <span className="mt-2 block text-lg font-extrabold leading-tight text-fp-ink">

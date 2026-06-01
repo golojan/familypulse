@@ -234,7 +234,7 @@ export async function listTopicsWithCounts() {
   }
 }
 
-export async function listTopicSectionsForLanding(limit = 8): Promise<TopicBlogSection[]> {
+export async function listTopicSectionsForLanding(limit = 12): Promise<TopicBlogSection[]> {
   try {
     await ensureDefaultTopics();
     // Pull each top-level topic together with its child topics. Posts are mostly
