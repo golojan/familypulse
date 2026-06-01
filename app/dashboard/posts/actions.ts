@@ -6,6 +6,7 @@ import { auth } from "@/auth";
 import { PostType } from "@/lib/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import { generateCoverForPost } from "@/lib/ai-drafts";
+import { autoShareOnPublish, shareToFacebook } from "@/lib/facebook";
 import {
   cleanBlocks,
   deriveCover,
@@ -175,6 +176,12 @@ export async function savePost(
   revalidatePath("/topics");
 
   if (mode === "publish") {
+    // Best-effort Facebook auto-post on first publish. Runs before redirect()
+    // (which throws) and never blocks publishing. autoShareOnPublish itself
+    // checks the enabled flag, config, and the already-shared guard.
+    if (targetId) {
+      await autoShareOnPublish(targetId);
+    }
     redirect("/dashboard");
   }
   if (!postId) {
@@ -214,6 +221,55 @@ export async function publishPost(postId: string) {
     data: { status: "PUBLISHED", publishedAt: owned.publishedAt ?? new Date() },
   });
   revalidatePath("/dashboard");
+
+  // Best-effort Facebook auto-post on first publish (no-op if already shared,
+  // disabled, or unconfigured).
+  await autoShareOnPublish(postId);
+}
+
+export type ShareResult = { ok: true } | { ok: false; error: string };
+
+/**
+ * Manually share a published post to Facebook (or re-share). Surfaces a result
+ * the dashboard can show. Forces a share even if already posted.
+ */
+export async function shareToFacebookAction(postId: string): Promise<ShareResult> {
+  let authorId: string;
+  try {
+    authorId = await requireAuthor();
+  } catch {
+    return { ok: false, error: "You don't have permission to do that." };
+  }
+
+  const post = await prisma.post.findFirst({
+    where: { id: postId, authorId },
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      excerpt: true,
+      status: true,
+      facebookPostId: true,
+    },
+  });
+  if (!post) return { ok: false, error: "Post not found." };
+  if (post.status !== "PUBLISHED") {
+    return { ok: false, error: "Publish the post before sharing it to Facebook." };
+  }
+
+  const result = await shareToFacebook(post, { force: true });
+  if (result.ok) {
+    revalidatePath("/dashboard");
+    return { ok: true };
+  }
+  const messages: Record<string, string> = {
+    "not-configured": "Facebook is not configured (Site Settings → Facebook Auto-post).",
+    disabled:
+      "Facebook auto-post is off, but manual share should still work — check configuration.",
+    "already-shared": "Already shared.",
+    error: result.error ?? "Facebook share failed.",
+  };
+  return { ok: false, error: messages[result.reason] ?? "Facebook share failed." };
 }
 
 export type GenerateCoverResult = { ok: true; url: string } | { ok: false; error: string };

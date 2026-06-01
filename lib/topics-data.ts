@@ -21,7 +21,7 @@ import {
   type Topic,
   type TopicBlogSection,
 } from "@/lib/familypulse-data";
-import { deriveCover, parseBlocks, type Block } from "@/lib/posts";
+import { deriveCover, deriveExcerpt, parseBlocks, type Block } from "@/lib/posts";
 
 const TOPIC_ICON_NAMES: Record<string, string> = {
   communication: "MessageCircle",
@@ -248,16 +248,18 @@ export async function listTopicSectionsForLanding(limit = 7): Promise<TopicBlogS
         },
       },
     });
-    return topics
-      .sort((a, b) => topicOrder(a.slug) - topicOrder(b.slug))
-      .map((topic) => ({
-        title: topic.title,
-        slug: topic.slug,
-        href: `/topics/${topic.slug}`,
-        posts: topic.posts.map(dbPostToArticle),
-      }))
-      // Hide topic sections that have no published posts.
-      .filter((section) => section.posts.length > 0);
+    return (
+      topics
+        .sort((a, b) => topicOrder(a.slug) - topicOrder(b.slug))
+        .map((topic) => ({
+          title: topic.title,
+          slug: topic.slug,
+          href: `/topics/${topic.slug}`,
+          posts: topic.posts.map(dbPostToArticle),
+        }))
+        // Hide topic sections that have no published posts.
+        .filter((section) => section.posts.length > 0)
+    );
   } catch (error) {
     warnTopicStoreFallback(error);
     return [];
@@ -413,4 +415,115 @@ export async function getPostPageData(slug: string): Promise<PostPageResult | nu
 
 export function getFallbackTopic(slug: string) {
   return getFallbackTopicBySlug(slug);
+}
+
+export type PostMeta = {
+  title: string;
+  description: string;
+  cover: string | null;
+  topicTitle: string | null;
+  type: "ARTICLE" | "VIDEO" | "PODCAST";
+  publishedAt: Date | null;
+  updatedAt: Date;
+};
+
+/**
+ * Lightweight metadata for a published post, for `generateMetadata` (SEO/OG).
+ * Selects only what the head needs and derives a description from the body when
+ * the excerpt is blank. Null when the post is missing/unpublished.
+ */
+export async function getPostMeta(slug: string): Promise<PostMeta | null> {
+  try {
+    const post = await prisma.post.findFirst({
+      where: { slug, status: "PUBLISHED" },
+      select: {
+        title: true,
+        excerpt: true,
+        coverImage: true,
+        blocks: true,
+        type: true,
+        publishedAt: true,
+        updatedAt: true,
+        topic: { select: { title: true } },
+      },
+    });
+    if (!post) return null;
+    const blocks = parseBlocks(post.blocks);
+    const description = post.excerpt?.trim() || deriveExcerpt(blocks) || SITE_FALLBACK_DESC;
+    return {
+      title: post.title,
+      description,
+      cover: post.coverImage ?? deriveCover(blocks),
+      topicTitle: post.topic?.title ?? null,
+      type: post.type,
+      publishedAt: post.publishedAt,
+      updatedAt: post.updatedAt,
+    };
+  } catch (error) {
+    warnTopicStoreFallback(error);
+    return null;
+  }
+}
+
+/** Topic title/description for `generateMetadata` on a topic page. */
+export async function getTopicMeta(
+  slug: string,
+): Promise<{ title: string; description: string } | null> {
+  try {
+    const topic = await prisma.topic.findUnique({
+      where: { slug },
+      select: { title: true, description: true },
+    });
+    if (!topic) {
+      const fb = getFallbackTopicBySlug(slug);
+      return fb ? { title: fb.title, description: fb.desc } : null;
+    }
+    return {
+      title: topic.title,
+      description:
+        topic.description?.trim() || `${topic.title} articles and guidance on FamilyPulse.`,
+    };
+  } catch (error) {
+    warnTopicStoreFallback(error);
+    const fb = getFallbackTopicBySlug(slug);
+    return fb ? { title: fb.title, description: fb.desc } : null;
+  }
+}
+
+const SITE_FALLBACK_DESC =
+  "Evidence-based family guidance on parenting, relationships, child development, and wellbeing.";
+
+export type SitemapEntry = { slug: string; lastModified: Date };
+
+/** Published post slugs + last-modified dates, for the sitemap. */
+export async function listPostSlugsForSitemap(): Promise<SitemapEntry[]> {
+  try {
+    const posts = await prisma.post.findMany({
+      where: { status: "PUBLISHED" },
+      orderBy: { updatedAt: "desc" },
+      select: { slug: true, updatedAt: true, publishedAt: true },
+      take: 5000,
+    });
+    return posts.map((p) => ({
+      slug: p.slug,
+      lastModified: p.updatedAt ?? p.publishedAt ?? new Date(),
+    }));
+  } catch (error) {
+    warnTopicStoreFallback(error);
+    return [];
+  }
+}
+
+/** Topic slugs + last-modified dates, for the sitemap. */
+export async function listTopicSlugsForSitemap(): Promise<SitemapEntry[]> {
+  try {
+    await ensureDefaultTopics();
+    const topics = await prisma.topic.findMany({
+      select: { slug: true, createdAt: true },
+    });
+    return topics.map((t) => ({ slug: t.slug, lastModified: t.createdAt ?? new Date() }));
+  } catch (error) {
+    warnTopicStoreFallback(error);
+    return [];
+  }
 }

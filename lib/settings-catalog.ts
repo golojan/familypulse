@@ -27,6 +27,10 @@ export type SettingKey =
   | "AI_DRAFTS_COVER_IMAGES"
   | "ADSENSE_CLIENT_ID"
   | "ADSENSE_AUTO_ADS"
+  | "FACEBOOK_AUTOPOST_ENABLED"
+  | "FACEBOOK_PAGE_ID"
+  | "FACEBOOK_PAGE_ACCESS_TOKEN"
+  | "FACEBOOK_GRAPH_VERSION"
   | "CRON_SECRET";
 
 export type SettingOption = { value: string; label: string };
@@ -263,6 +267,45 @@ export const SETTING_GROUPS: SettingGroup[] = [
           { value: "true", label: "On" },
         ],
         help: "When On, Google Auto ads run across all public pages (AdSense decides ad placement). Also enable Auto ads for this site in your AdSense console. Requires a Publisher ID.",
+      },
+    ],
+  },
+  {
+    id: "facebook",
+    title: "Facebook Auto-post",
+    description:
+      "Automatically share posts to a Facebook Page when they are first published. Requires a Facebook Page and a long-lived Page Access Token (create these in Meta for Developers). Posts are shared as link posts so Facebook shows the cover image and title.",
+    fields: [
+      {
+        key: "FACEBOOK_AUTOPOST_ENABLED",
+        label: "Auto-post on publish",
+        secret: false,
+        options: [
+          { value: "false", label: "Off" },
+          { value: "true", label: "On" },
+        ],
+        help: "When On, each post is shared to the Facebook Page the first time it is published. Requires a Page ID and access token.",
+      },
+      {
+        key: "FACEBOOK_PAGE_ID",
+        label: "Facebook Page ID",
+        secret: false,
+        placeholder: "1234567890",
+        help: "The numeric id of the Facebook Page to post to.",
+      },
+      {
+        key: "FACEBOOK_PAGE_ACCESS_TOKEN",
+        label: "Page Access Token",
+        secret: true,
+        placeholder: "EAA...",
+        help: "A long-lived Page Access Token with pages_manage_posts permission. Stored encrypted.",
+      },
+      {
+        key: "FACEBOOK_GRAPH_VERSION",
+        label: "Graph API Version",
+        secret: false,
+        placeholder: "v25.0",
+        help: "Facebook Graph API version. Defaults to v25.0 when blank.",
       },
     ],
   },

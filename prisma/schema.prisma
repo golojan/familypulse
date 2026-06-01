@@ -90,6 +90,10 @@ model Post {
   /// Null means never audited; the audit processes the least-recently-audited first.
   lastAuditedAt DateTime?
 
+  /// Facebook post id once this post has been auto/manually shared to the Page.
+  /// Set means "already shared" — used to avoid duplicate posts on republish.
+  facebookPostId String?
+
   authorId String
   author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
 

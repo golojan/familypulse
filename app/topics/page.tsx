@@ -1,9 +1,18 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { buildMetadata } from "@/lib/seo";
 import { listTopicsWithCounts } from "@/lib/topics-data";
 import { PublicShell } from "@/components/public-shell";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = buildMetadata({
+  title: "Browse topics",
+  description:
+    "Browse FamilyPulse by topic — parenting, relationships, child development, wellbeing, and more. Evidence-based family guidance grouped by what matters most.",
+  path: "/topics",
+});
 
 export default async function TopicsPage() {
   const topics = await listTopicsWithCounts();

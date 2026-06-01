@@ -2,17 +2,42 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, Clock3 } from "lucide-react";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { auth } from "@/auth";
 import { getArticleHref } from "@/lib/familypulse-data";
+import { articleJsonLd, buildMetadata, resolveOgImages } from "@/lib/seo";
 import { getSetting } from "@/lib/settings";
 import { hasDismissedGate, isSubscribed } from "@/lib/subscription";
-import { getPostPageData } from "@/lib/topics-data";
+import { getPostMeta, getPostPageData } from "@/lib/topics-data";
 import { isYouTubeUrl, youTubeEmbedUrl, youTubeId } from "@/lib/video";
+import { JsonLd } from "@/components/json-ld";
 import { PostBody, type PostGateInfo } from "@/components/post-body";
 import { PublicRail } from "@/components/public-rail";
 import { PublicShell } from "@/components/public-shell";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const meta = await getPostMeta(slug);
+  if (!meta) {
+    return buildMetadata({ title: "Post not found", path: `/posts/${slug}`, noindex: true });
+  }
+  return buildMetadata({
+    title: meta.title,
+    description: meta.description,
+    path: `/posts/${slug}`,
+    type: "article",
+    images: resolveOgImages(meta.cover),
+    publishedTime: meta.publishedAt?.toISOString(),
+    modifiedTime: meta.updatedAt.toISOString(),
+    section: meta.topicTitle ?? undefined,
+  });
+}
 
 export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -46,6 +71,14 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
     href: related.href,
   }));
 
+  const jsonLd = articleJsonLd({
+    title: post.title,
+    description: post.excerpt ?? post.title,
+    path: `/posts/${slug}`,
+    images: resolveOgImages(post.image),
+    section: post.topicTitle ?? undefined,
+  });
+
   return (
     <PublicShell
       rail={
@@ -56,6 +89,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
       }
     >
       <article className="min-w-0">
+        <JsonLd data={jsonLd} />
         <Link
           className="inline-flex items-center gap-2 text-sm font-extrabold text-fp-green"
           href={post.topicHref ?? "/topics"}

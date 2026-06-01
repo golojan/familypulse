@@ -1,14 +1,22 @@
 import type { Metadata } from "next";
 import { Nunito } from "next/font/google";
 import { StoreProvider } from "@/store/StoreProvider";
+import { buildMetadata, SITE_NAME, SITE_TAGLINE, siteUrl } from "@/lib/seo";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "FamilyPulse - Healthy Families. Stronger Together.",
-  description:
-    "Family education blog and podcast for couples, parenting, relationships, discipline and work-life balance.",
-  // Icons are wired via the App Router file conventions: app/icon.png and
-  // app/apple-icon.png (Next auto-generates the correct <link> tags).
+  // metadataBase makes every relative OG/canonical URL resolve to an absolute
+  // production URL (set NEXT_PUBLIC_SITE_URL in prod). See lib/seo.ts.
+  metadataBase: new URL(siteUrl()),
+  applicationName: SITE_NAME,
+  ...buildMetadata({ path: "/" }),
+  // "%s · FamilyPulse" for child pages; the default is the full brand line.
+  // (Overrides the plain-string title from buildMetadata so child pages get the
+  // template; the home page renders its own metadata below via the route.)
+  title: {
+    default: `${SITE_NAME} — ${SITE_TAGLINE}`,
+    template: `%s · ${SITE_NAME}`,
+  },
 };
 
 const nunito = Nunito({

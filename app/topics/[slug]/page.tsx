@@ -1,13 +1,32 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, Clock3 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { getArticleHref } from "@/lib/familypulse-data";
-import { getTopicPageData } from "@/lib/topics-data";
+import { buildMetadata } from "@/lib/seo";
+import { getTopicMeta, getTopicPageData } from "@/lib/topics-data";
 import { PublicRail } from "@/components/public-rail";
 import { PublicShell } from "@/components/public-shell";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const meta = await getTopicMeta(slug);
+  if (!meta) {
+    return buildMetadata({ title: "Topic not found", path: `/topics/${slug}`, noindex: true });
+  }
+  return buildMetadata({
+    title: `${meta.title} — Family guidance`,
+    description: meta.description,
+    path: `/topics/${slug}`,
+  });
+}
 
 export default async function TopicPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

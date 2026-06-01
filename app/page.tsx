@@ -1,4 +1,5 @@
 import { quickTopics, trendingTopics } from "@/lib/familypulse-data";
+import { websiteJsonLd } from "@/lib/seo";
 import {
   listFeaturedPosts,
   listPopularPosts,
@@ -6,6 +7,7 @@ import {
   listVideoPosts,
 } from "@/lib/topics-data";
 import { CategoryBlogSections } from "@/components/category-blog-sections";
+import { JsonLd } from "@/components/json-ld";
 import { FeaturedArticles } from "@/components/featured-articles";
 import { HeroSliderCard } from "@/components/hero-slider-card";
 import { MediaGrid } from "@/components/media-grid";
@@ -28,6 +30,7 @@ export default async function FamilyPulseLanding() {
 
   return (
     <main className="min-h-screen bg-background pb-24 font-sans text-fp-ink lg:pb-0">
+      <JsonLd data={websiteJsonLd()} />
       <SiteHeader />
 
       <div className="mx-auto grid max-w-[1720px] gap-4 px-4 py-4 sm:px-8 lg:py-5 2xl:grid-cols-[minmax(0,1fr)_540px]">
