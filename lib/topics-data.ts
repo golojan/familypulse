@@ -234,29 +234,40 @@ export async function listTopicsWithCounts() {
   }
 }
 
-export async function listTopicSectionsForLanding(limit = 7): Promise<TopicBlogSection[]> {
+export async function listTopicSectionsForLanding(limit = 8): Promise<TopicBlogSection[]> {
   try {
     await ensureDefaultTopics();
+    // Pull each top-level topic together with its child topics. Posts are mostly
+    // assigned to the more specific child topics, so a section must aggregate the
+    // parent's own posts *and* all of its children's to show a rich mix of cards.
     const topics = await prisma.topic.findMany({
       where: { parentId: null },
       include: {
-        posts: {
-          where: { status: "PUBLISHED" },
+        subtopics: { select: { id: true } },
+      },
+    });
+
+    const sections = await Promise.all(
+      topics.map(async (topic) => {
+        const topicIds = [topic.id, ...topic.subtopics.map((c) => c.id)];
+        const posts = await prisma.post.findMany({
+          where: { status: "PUBLISHED", topicId: { in: topicIds } },
           orderBy: [{ publishedAt: "desc" }, { updatedAt: "desc" }],
           take: limit,
           include: { topic: true },
-        },
-      },
-    });
-    return (
-      topics
-        .sort((a, b) => topicOrder(a.slug) - topicOrder(b.slug))
-        .map((topic) => ({
-          title: topic.title,
+        });
+        return {
           slug: topic.slug,
+          title: topic.title,
           href: `/topics/${topic.slug}`,
-          posts: topic.posts.map(dbPostToArticle),
-        }))
+          posts: posts.map(dbPostToArticle),
+        };
+      }),
+    );
+
+    return (
+      sections
+        .sort((a, b) => topicOrder(a.slug) - topicOrder(b.slug))
         // Hide topic sections that have no published posts.
         .filter((section) => section.posts.length > 0)
     );
