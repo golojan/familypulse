@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { prisma } from "@/lib/prisma";
 import { getSettings } from "@/lib/settings";
 
 /**
@@ -27,6 +28,7 @@ const WA_TIMEOUT_MS = 20_000;
 export type WhatsAppConfig = {
   enabled: boolean;
   phoneNumberId: string;
+  businessAccountId: string;
   accessToken: string;
   verifyToken: string;
   appSecret: string;
@@ -45,6 +47,7 @@ export async function getWhatsAppConfig(): Promise<WhatsAppConfig> {
   return {
     enabled: (s.WHATSAPP_ENABLED ?? "").trim().toLowerCase() === "true",
     phoneNumberId: (s.WHATSAPP_PHONE_NUMBER_ID ?? "").trim(),
+    businessAccountId: (s.WHATSAPP_BUSINESS_ACCOUNT_ID ?? "").trim(),
     accessToken: (s.WHATSAPP_ACCESS_TOKEN ?? "").trim(),
     verifyToken: (s.WHATSAPP_VERIFY_TOKEN ?? "").trim(),
     appSecret: (s.WHATSAPP_APP_SECRET ?? "").trim(),
@@ -108,6 +111,8 @@ export type InboundMessage = {
   phoneNumberId: string;
   /** Unix timestamp (seconds) the message was sent, when present. */
   timestamp?: string;
+  /** The original message object from the payload, kept for capture/debugging. */
+  raw?: unknown;
 };
 
 /**
@@ -143,6 +148,7 @@ export function parseInboundMessages(payload: unknown): InboundMessage[] {
           text: extractText(message, type),
           phoneNumberId,
           timestamp: typeof message.timestamp === "string" ? message.timestamp : undefined,
+          raw: message,
         });
       }
     }
@@ -168,6 +174,79 @@ function extractText(message: Record<string, unknown>, type: string): string {
     }
   }
   return "";
+}
+
+/**
+ * Persist an inbound message. Idempotent on the WhatsApp message id: a
+ * redelivered webhook updates the existing row rather than inserting a duplicate.
+ * Best-effort — never throws into the webhook handler.
+ */
+export async function captureInboundMessage(message: InboundMessage): Promise<void> {
+  const sentAt = parseTimestamp(message.timestamp);
+  const data = {
+    direction: "INBOUND" as const,
+    fromNumber: message.from,
+    toNumber: message.phoneNumberId || null,
+    phoneNumberId: message.phoneNumberId || null,
+    type: message.type,
+    body: message.text || null,
+    sentAt,
+    raw: toJson(message.raw),
+  };
+
+  try {
+    if (message.messageId) {
+      await prisma.whatsAppMessage.upsert({
+        where: { messageId: message.messageId },
+        create: { messageId: message.messageId, ...data },
+        update: data,
+      });
+    } else {
+      await prisma.whatsAppMessage.create({ data });
+    }
+  } catch (err) {
+    console.warn("WhatsApp inbound capture failed:", err);
+  }
+}
+
+/**
+ * Persist an outbound message we sent. Best-effort — logging only on failure so
+ * a capture error never affects the send result.
+ */
+export async function captureOutboundMessage(input: {
+  to: string;
+  body: string;
+  messageId?: string;
+  phoneNumberId?: string;
+}): Promise<void> {
+  try {
+    await prisma.whatsAppMessage.create({
+      data: {
+        direction: "OUTBOUND",
+        fromNumber: input.phoneNumberId ?? "",
+        toNumber: input.to,
+        phoneNumberId: input.phoneNumberId ?? null,
+        type: "text",
+        body: input.body,
+        messageId: input.messageId ?? null,
+      },
+    });
+  } catch (err) {
+    console.warn("WhatsApp outbound capture failed:", err);
+  }
+}
+
+/** Convert a WhatsApp seconds-epoch string into a Date, when valid. */
+function parseTimestamp(ts: string | undefined): Date | null {
+  if (!ts) return null;
+  const secs = Number(ts);
+  if (!Number.isFinite(secs) || secs <= 0) return null;
+  return new Date(secs * 1000);
+}
+
+/** Narrow unknown payload fragments to a Prisma-acceptable JSON value. */
+function toJson(value: unknown): object | undefined {
+  return isRecord(value) ? value : undefined;
 }
 
 export type SendResult =
@@ -219,6 +298,12 @@ export async function sendTextMessage(to: string, body: string): Promise<SendRes
         error: data.error?.message ?? `WhatsApp returned ${res.status}`,
       };
     }
+    await captureOutboundMessage({
+      to,
+      body: body.slice(0, 4096),
+      messageId,
+      phoneNumberId: config.phoneNumberId,
+    });
     return { ok: true, messageId };
   } catch (err) {
     const message =

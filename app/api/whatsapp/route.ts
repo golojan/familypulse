@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import {
+  captureInboundMessage,
   getWhatsAppConfig,
   parseInboundMessages,
   sendTextMessage,
@@ -71,6 +72,9 @@ export async function POST(request: NextRequest) {
   // response — a non-2xx would make Meta redeliver the same notification.
   for (const message of messages) {
     try {
+      // Capture every message first — this is the system of record, independent
+      // of whether auto-reply is enabled.
+      await captureInboundMessage(message);
       await handleInboundMessage(config.enabled, message);
     } catch (err) {
       console.warn("WhatsApp message handling failed:", err);

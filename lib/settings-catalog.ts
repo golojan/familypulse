@@ -33,6 +33,7 @@ export type SettingKey =
   | "FACEBOOK_GRAPH_VERSION"
   | "WHATSAPP_ENABLED"
   | "WHATSAPP_PHONE_NUMBER_ID"
+  | "WHATSAPP_BUSINESS_ACCOUNT_ID"
   | "WHATSAPP_ACCESS_TOKEN"
   | "WHATSAPP_VERIFY_TOKEN"
   | "WHATSAPP_APP_SECRET"
@@ -337,6 +338,13 @@ export const SETTING_GROUPS: SettingGroup[] = [
         secret: false,
         placeholder: "1234567890",
         help: "The WhatsApp Cloud API phone number id (not the phone number itself) used to send messages.",
+      },
+      {
+        key: "WHATSAPP_BUSINESS_ACCOUNT_ID",
+        label: "Business Account ID (WABA)",
+        secret: false,
+        placeholder: "1234567890",
+        help: "Your WhatsApp Business Account id. Used for account-level Graph API calls (templates, phone numbers).",
       },
       {
         key: "WHATSAPP_ACCESS_TOKEN",

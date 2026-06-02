@@ -180,6 +180,41 @@ model SiteSetting {
   updatedAt DateTime @updatedAt
 }
 
+enum WhatsAppDirection {
+  INBOUND
+  OUTBOUND
+}
+
+/// Every WhatsApp message that flows through the business number, captured from
+/// the Cloud API webhook (inbound) and our send helper (outbound). `messageId`
+/// is the WhatsApp wamid and is unique so redelivered webhooks don't duplicate
+/// rows. `raw` keeps the original payload fragment for fidelity/debugging.
+model WhatsAppMessage {
+  id            String            @id @default(cuid())
+  direction     WhatsAppDirection
+  /// WhatsApp message id (wamid...). Unique per message for idempotent capture.
+  messageId     String?           @unique
+  /// Sender wa_id (international format, no "+"). The customer's number.
+  fromNumber    String
+  /// Recipient wa_id. For inbound this is our number/phone-number-id context.
+  toNumber      String?
+  /// Our Cloud API phone number id that received/sent the message.
+  phoneNumberId String?
+  /// WhatsApp message type: text, image, audio, button, interactive, etc.
+  type          String            @default("text")
+  /// Human-readable body for text/button/interactive; empty for media-only.
+  body          String?
+  /// When WhatsApp reported the message was sent (from the payload), when present.
+  sentAt        DateTime?
+  /// Original payload fragment for this message, for debugging/fidelity.
+  raw           Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([fromNumber, createdAt])
+  @@index([direction, createdAt])
+}
+
 enum AiDraftRunStatus {
   SUCCESS
   PARTIAL
