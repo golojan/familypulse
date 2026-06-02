@@ -31,6 +31,12 @@ export type SettingKey =
   | "FACEBOOK_PAGE_ID"
   | "FACEBOOK_PAGE_ACCESS_TOKEN"
   | "FACEBOOK_GRAPH_VERSION"
+  | "WHATSAPP_ENABLED"
+  | "WHATSAPP_PHONE_NUMBER_ID"
+  | "WHATSAPP_ACCESS_TOKEN"
+  | "WHATSAPP_VERIFY_TOKEN"
+  | "WHATSAPP_APP_SECRET"
+  | "WHATSAPP_GRAPH_VERSION"
   | "CRON_SECRET";
 
 export type SettingOption = { value: string; label: string };
@@ -302,6 +308,57 @@ export const SETTING_GROUPS: SettingGroup[] = [
       },
       {
         key: "FACEBOOK_GRAPH_VERSION",
+        label: "Graph API Version",
+        secret: false,
+        placeholder: "v25.0",
+        help: "Facebook Graph API version. Defaults to v25.0 when blank.",
+      },
+    ],
+  },
+  {
+    id: "whatsapp",
+    title: "WhatsApp Messaging",
+    description:
+      "WhatsApp Cloud API webhook + messaging. Set the Callback URL in Meta (App → WhatsApp → Configuration) to https://<your-domain>/api/whatsapp, using the Verify Token below. The App Secret is used to validate incoming webhook signatures; the Access Token + Phone Number ID are used to send replies.",
+    fields: [
+      {
+        key: "WHATSAPP_ENABLED",
+        label: "Auto-reply enabled",
+        secret: false,
+        options: [
+          { value: "false", label: "Off" },
+          { value: "true", label: "On" },
+        ],
+        help: "When On, inbound messages receive an automatic acknowledgement reply. The webhook still verifies and logs messages when Off.",
+      },
+      {
+        key: "WHATSAPP_PHONE_NUMBER_ID",
+        label: "Phone Number ID",
+        secret: false,
+        placeholder: "1234567890",
+        help: "The WhatsApp Cloud API phone number id (not the phone number itself) used to send messages.",
+      },
+      {
+        key: "WHATSAPP_ACCESS_TOKEN",
+        label: "Access Token",
+        secret: true,
+        placeholder: "EAA...",
+        help: "A System User or long-lived access token with whatsapp_business_messaging permission. Stored encrypted.",
+      },
+      {
+        key: "WHATSAPP_VERIFY_TOKEN",
+        label: "Webhook Verify Token",
+        secret: true,
+        help: "An arbitrary string you choose. Enter the SAME value in Meta's webhook configuration so the GET handshake succeeds. Stored encrypted.",
+      },
+      {
+        key: "WHATSAPP_APP_SECRET",
+        label: "App Secret",
+        secret: true,
+        help: "Your Meta App Secret. Used to verify the X-Hub-Signature-256 on incoming webhooks. Required — webhooks are rejected when unset. Stored encrypted.",
+      },
+      {
+        key: "WHATSAPP_GRAPH_VERSION",
         label: "Graph API Version",
         secret: false,
         placeholder: "v25.0",
