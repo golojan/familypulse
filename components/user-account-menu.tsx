@@ -11,6 +11,7 @@ import {
   PenLine,
   Settings,
   UserRound,
+  UsersRound,
 } from "lucide-react";
 import { logout } from "@/app/auth-actions";
 
@@ -126,15 +127,26 @@ export function UserAccountMenu({
               Profile
             </Link>
             {isSuperadmin ? (
-              <Link
-                role="menuitem"
-                className="flex items-center gap-3 px-4 py-3 text-sm font-bold text-fp-ink hover:bg-fp-mint/60"
-                href="/admin/settings"
-                onClick={() => setOpen(false)}
-              >
-                <Settings className="h-4 w-4 text-fp-green" />
-                Site settings
-              </Link>
+              <>
+                <Link
+                  role="menuitem"
+                  className="flex items-center gap-3 px-4 py-3 text-sm font-bold text-fp-ink hover:bg-fp-mint/60"
+                  href="/dashboard/users"
+                  onClick={() => setOpen(false)}
+                >
+                  <UsersRound className="h-4 w-4 text-fp-green" />
+                  User management
+                </Link>
+                <Link
+                  role="menuitem"
+                  className="flex items-center gap-3 px-4 py-3 text-sm font-bold text-fp-ink hover:bg-fp-mint/60"
+                  href="/admin/settings"
+                  onClick={() => setOpen(false)}
+                >
+                  <Settings className="h-4 w-4 text-fp-green" />
+                  Site settings
+                </Link>
+              </>
             ) : null}
             <form action={logout} className="border-t border-fp-line">
               <button

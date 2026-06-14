@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Bot, FileText, Images, Search } from "lucide-react";
+import { Bot, FileText, Images, Search, UsersRound } from "lucide-react";
 import { auth } from "@/auth";
 import { Logo } from "@/components/logo";
 import { AuthButton } from "@/components/auth-button";
@@ -15,6 +15,7 @@ type DashNavItem = { label: string; href: string; icon: typeof FileText; roles?:
 const DASH_NAV: DashNavItem[] = [
   { label: "Posts", href: "/dashboard", icon: FileText },
   { label: "Media", href: "/dashboard/media", icon: Images, roles: CAN_MANAGE },
+  { label: "Users", href: "/dashboard/users", icon: UsersRound, roles: ["SUPERADMIN"] },
   { label: "Pulse AI", href: "/dashboard/pulse-ai", icon: Bot, roles: ["SUPERADMIN"] },
 ];
 
