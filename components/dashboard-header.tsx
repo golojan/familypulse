@@ -16,7 +16,7 @@ const DASH_NAV: DashNavItem[] = [
   { label: "Posts", href: "/dashboard", icon: FileText },
   { label: "Media", href: "/dashboard/media", icon: Images, roles: CAN_MANAGE },
   { label: "Users", href: "/dashboard/users", icon: UsersRound, roles: ["SUPERADMIN"] },
-  { label: "Pulse AI", href: "/dashboard/pulse-ai", icon: Bot, roles: ["SUPERADMIN"] },
+  { label: "AI Editor", href: "/dashboard/pulse-ai", icon: Bot, roles: ["SUPERADMIN"] },
 ];
 
 export async function DashboardHeader() {

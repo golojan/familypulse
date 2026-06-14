@@ -31,15 +31,23 @@ export async function GET(request: NextRequest) {
   const config = await getWhatsAppConfig();
   const params = request.nextUrl.searchParams;
 
+  const mode = params.get("hub.mode");
+  const token = params.get("hub.verify_token");
   const challenge = verifyWebhookSubscription(config, {
-    mode: params.get("hub.mode"),
-    token: params.get("hub.verify_token"),
+    mode,
+    token,
     challenge: params.get("hub.challenge"),
   });
 
   if (challenge === null) {
+    console.warn(
+      `WhatsApp webhook verification failed: mode=${mode ?? "<none>"} ` +
+        `verifyTokenConfigured=${Boolean(config.verifyToken)} ` +
+        `tokenMatched=${Boolean(token && config.verifyToken && token === config.verifyToken)}`,
+    );
     return new NextResponse("Forbidden", { status: 403 });
   }
+  console.info("WhatsApp webhook verified (subscription handshake succeeded).");
   // Meta expects the raw challenge string echoed back verbatim.
   return new NextResponse(challenge, {
     status: 200,
@@ -56,6 +64,10 @@ export async function POST(request: NextRequest) {
   const signature = request.headers.get("x-hub-signature-256");
 
   if (!verifyWebhookSignature(config, rawBody, signature)) {
+    console.warn(
+      `WhatsApp webhook signature rejected: appSecretConfigured=${Boolean(config.appSecret)} ` +
+        `signatureHeaderPresent=${Boolean(signature)} bodyBytes=${rawBody.length}`,
+    );
     return new NextResponse("Invalid signature", { status: 401 });
   }
 
